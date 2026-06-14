@@ -1,38 +1,210 @@
-.App {
+.login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0a0a0a;
+  padding: 2rem 1.5rem;
+}
+
+.login__content {
+  width: 100%;
+  max-width: 360px;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.login__content--wide {
+  max-width: 420px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.login__logo {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2.5rem, 10vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #ffffff;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.login__tagline {
+  margin: 0 0 3rem;
+  font-size: 1rem;
+  font-weight: 400;
+  color: #888888;
+  letter-spacing: 0.01em;
+}
+
+.login__title {
+  margin: 0 0 2.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+}
+
+.login__form {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+.login__input {
+  width: 100%;
+  padding: 1rem 1.125rem;
+  font-size: 1rem;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.login__input::placeholder {
+  color: #555555;
+}
+
+.login__input:focus {
+  border-color: #444444;
+}
+
+.login__select {
+  width: 100%;
+  padding: 1rem 1.125rem;
+  font-size: 1rem;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.125rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.login__select:invalid,
+.login__select--placeholder {
+  color: #555555;
+}
+
+.login__select:focus {
+  border-color: #444444;
+}
+
+.login__select option {
+  color: #ffffff;
+  background-color: #1a1a1a;
+}
+
+.login__button {
+  width: 100%;
+  padding: 1rem 1.125rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background-color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.login__button:hover {
+  opacity: 0.9;
+}
+
+.login__button:active {
+  opacity: 0.8;
+}
+
+.login__otp-message {
+  margin: 0 0 2.5rem;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: #888888;
+  line-height: 1.5;
+}
+
+.login__otp-inputs {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.login__otp-input {
+  width: 2.75rem;
+  height: 3.25rem;
+  padding: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.login__otp-input:focus {
+  border-color: #444444;
+}
+
+.login__link {
+  margin-top: 1.5rem;
+  padding: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #888888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.login__link:hover {
+  color: #ffffff;
+}
+
+.login__sports-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.login__sport-card {
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  padding: 0.875rem 0.75rem;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  color: #ffffff;
 }
 
-.App-link {
-  color: #61dafb;
+.login__sport-card--selected {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: #0a0a0a;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.login__sport-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.login__input--custom-sport {
+  margin-bottom: 1rem;
 }
