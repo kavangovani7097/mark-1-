@@ -63,3 +63,27 @@ test('shows sports selection screen after onboarding', async () => {
   expect(screen.getByRole('button', { name: 'Squash' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Squash' })).toHaveClass('login__sport-card--selected');
 });
+
+test('shows home screen after completing onboarding', async () => {
+  render(<App />);
+
+  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
+  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
+  await userEvent.type(screen.getByPlaceholderText('Age'), '25');
+  await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
+  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+  expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Live Sessions' })).toHaveClass('home__tab--active');
+  expect(screen.getByRole('button', { name: 'Find Players' })).toBeInTheDocument();
+  expect(screen.getByText('Badminton')).toBeInTheDocument();
+  expect(screen.getByText('Hosted by Rahul')).toBeInTheDocument();
+  expect(screen.getByText('Today, 4:00 PM')).toBeInTheDocument();
+  expect(screen.getByText('Satellite, Ahmedabad')).toBeInTheDocument();
+  expect(screen.getByText('3 slots left')).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Join' })).toHaveLength(3);
+  expect(screen.getByRole('button', { name: 'Create new session' })).toBeInTheDocument();
+});
