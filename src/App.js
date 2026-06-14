@@ -119,7 +119,7 @@ function App() {
               {SAMPLE_SESSIONS.map((session) => (
                 <article key={session.id} className="home__session-card">
                   <div className="home__session-top">
-                    <div>
+                    <div className="home__session-left">
                       <span className="home__session-pill">{session.type}</span>
                       <h2 className="home__session-sport">{session.sport}</h2>
                     </div>
