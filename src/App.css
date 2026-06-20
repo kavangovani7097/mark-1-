@@ -297,36 +297,69 @@
   text-align: left;
 }
 
+.home__session-card--clickable {
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.home__session-card--clickable:hover {
+  border-color: #444444;
+}
+
+.home__session-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.875rem;
+}
+
+.home__session-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.home__session-type {
+  display: inline-block;
+  width: fit-content;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #888888;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+}
+
 .home__session-sport {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
   color: #ffffff;
 }
 
 .home__session-detail {
-  margin: 0 0 0.375rem;
-  font-size: 0.875rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
   font-weight: 400;
   color: #888888;
 }
 
-.home__session-slots {
-  margin: 0.75rem 0 1rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #ffffff;
+.home__session-detail:last-child {
+  margin-bottom: 0;
 }
 
 .home__session-join {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  font-size: 0.9375rem;
+  flex-shrink: 0;
+  padding: 0.5rem 1.125rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #0a0a0a;
   background-color: #ffffff;
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
@@ -340,6 +373,144 @@
   font-size: 0.9375rem;
   color: #888888;
   text-align: center;
+}
+
+.find__filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.find__sport-select {
+  width: 100%;
+}
+
+.find__type-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.find__type-filter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.find__type-filter--active {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: #0a0a0a;
+}
+
+.find__type-filter--locked {
+  color: #555555;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.find__type-filter--locked.find__type-filter--active {
+  background-color: #1a1a1a;
+  border-color: #2a2a2a;
+  color: #555555;
+}
+
+.find__lock-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex-shrink: 0;
+}
+
+.find__players {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.find__player-card {
+  padding: 1.25rem;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.find__player-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.875rem;
+}
+
+.find__player-heading {
+  min-width: 0;
+}
+
+.find__player-name {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.find__player-city {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #888888;
+}
+
+.find__player-sessions {
+  margin: 0.625rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #888888;
+}
+
+.find__player-sports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.find__sport-pill {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #0a0a0a;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+}
+
+.find__invite-btn {
+  flex-shrink: 0;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0a0a0a;
+  background-color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.find__invite-btn:hover {
+  opacity: 0.9;
 }
 
 .home__fab {
@@ -363,32 +534,373 @@
 .home__fab:hover {
   opacity: 0.9;
 }
-.home__session-top {
+
+.create {
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.create__header {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 2.5rem;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.create__back {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-}
-
-.home__session-pill {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #888;
-  margin-bottom: 6px;
-}
-
-.home__session-join {
-  background: #fff;
-  color: #000;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  background: none;
   border: none;
-  border-radius: 20px;
-  padding: 8px 20px;
-  font-size: 13px;
-  font-weight: 700;
+  color: #ffffff;
   cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
+  transition: opacity 0.2s ease;
+}
+
+.create__back:hover {
+  opacity: 0.7;
+}
+
+.create__back-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.create__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.create__header-spacer {
+  width: 2.5rem;
+}
+
+.create__main {
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+.create__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.create__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.create__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #888888;
+  text-align: left;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.create__sports-grid {
+  margin-bottom: 0;
+}
+
+.create__type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.625rem;
+}
+
+.create__type-option {
+  padding: 0.875rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.create__type-option--selected {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  color: #0a0a0a;
+}
+
+.login__input--datetime {
+  color-scheme: dark;
+}
+
+.create__submit {
+  margin-top: 0.5rem;
+}
+
+.profile {
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.profile__header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.profile__main {
+  padding: 1.5rem;
+}
+
+.profile__identity {
+  margin-bottom: 1.75rem;
+  text-align: left;
+}
+
+.profile__name {
+  margin: 0 0 0.375rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.profile__city {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: #888888;
+}
+
+.profile__stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  padding: 1.25rem;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+}
+
+.profile__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  text-align: center;
+}
+
+.profile__stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.profile__stat-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #888888;
+  line-height: 1.3;
+}
+
+.profile__sports {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.profile__sport-pill {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+}
+
+.profile__section {
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.profile__section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #888888;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.profile__empty {
+  margin: 0;
+  padding: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #555555;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.profile__edit {
+  margin-top: 0.5rem;
+}
+
+.session-detail {
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #ffffff;
+}
+
+.session-detail__header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.session-detail__main {
+  padding: 1.5rem;
+  text-align: left;
+}
+
+.session-detail__type-pill {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #888888;
+  border: 1px solid #2a2a2a;
+  border-radius: 999px;
+}
+
+.session-detail__title {
+  margin: 0 0 1.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.session-detail__host {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.session-detail__host-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.session-detail__host-badge {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+  background-color: #ffffff;
+  border-radius: 999px;
+}
+
+.session-detail__info {
+  margin: 0 0 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #888888;
+}
+
+.session-detail__slots {
+  margin: 0.75rem 0 1.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.session-detail__section {
+  margin-bottom: 1.75rem;
+}
+
+.session-detail__section-title {
+  margin: 0 0 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #888888;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.session-detail__avatars {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.session-detail__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #2a2a2a;
+  border: 1px solid #444444;
+  border-radius: 50%;
+}
+
+.session-detail__avatar--empty {
+  background-color: #1a1a1a;
+  border: 1px dashed #2a2a2a;
+  color: transparent;
+}
+
+.session-detail__chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+}
+
+.session-detail__message {
+  text-align: left;
+}
+
+.session-detail__message-author {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.session-detail__message-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #888888;
+  line-height: 1.4;
+}
+
+.session-detail__join {
+  margin-top: 0.5rem;
 }
