@@ -122,6 +122,14 @@
   opacity: 0.8;
 }
 
+.login__error {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ff4444;
+  line-height: 1.4;
+}
+
 .login__otp-message {
   margin: 0 0 2.5rem;
   font-size: 0.9375rem;
@@ -368,11 +376,19 @@
   opacity: 0.9;
 }
 
+.home__loading {
+  margin: 3rem 0;
+  font-size: 0.9375rem;
+  color: #888888;
+  text-align: center;
+}
+
 .home__empty {
   margin: 3rem 0;
   font-size: 0.9375rem;
   color: #888888;
   text-align: center;
+  line-height: 1.5;
 }
 
 .find__filters {
@@ -899,6 +915,13 @@
   font-weight: 400;
   color: #888888;
   line-height: 1.4;
+}
+
+.session-detail__chat-empty {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #555555;
+  text-align: center;
 }
 
 .session-detail__join {

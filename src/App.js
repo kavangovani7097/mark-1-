@@ -1,7 +1,77 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { supabase, supabaseUrl, supabaseAnonKey } from './supabase';
 import './App.css';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
+
+const formatPhone = (phone) => {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith('+')) return trimmed;
+  return `+${trimmed.replace(/\D/g, '')}`;
+};
+
+const formatSessionTime = (isoString) => {
+  const date = new Date(isoString);
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const timeStr = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  if (date.toDateString() === now.toDateString()) {
+    return `Today, ${timeStr}`;
+  }
+  if (date.toDateString() === tomorrow.toDateString()) {
+    return `Tomorrow, ${timeStr}`;
+  }
+
+  return `${date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  })}, ${timeStr}`;
+};
+
+const datetimeLocalToISO = (value) => {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+
+  const match = trimmed.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute, second = '0'] = match;
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second)
+  );
+
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString();
+};
+
+const mapSessionFromDb = (row) => ({
+  id: row.id,
+  sport: row.sport,
+  sessionType: row.session_type,
+  time: formatSessionTime(row.scheduled_at),
+  location: row.city ? `${row.venue}, ${row.city}` : row.venue,
+  slotsLeft: row.slots_remaining,
+  maxPlayers: row.max_players,
+  venue: row.venue,
+  city: row.city,
+  scheduledAt: row.scheduled_at,
+  attendees: [],
+  chatPreview: [],
+});
 
 const CITIES = [
   'Ahmedabad',
@@ -11,54 +81,6 @@ const CITIES = [
   'Delhi',
   'Bangalore',
   'Pune',
-];
-
-const SAMPLE_SESSIONS = [
-  {
-    id: 1,
-    sport: 'Badminton',
-    sessionType: 'Small Group',
-    host: 'Rahul',
-    time: 'Today, 4:00 PM',
-    location: 'Satellite, Ahmedabad',
-    slotsLeft: 3,
-    maxPlayers: 6,
-    attendees: ['Priya', 'Meera', 'Rohan'],
-    chatPreview: [
-      { author: 'Rahul', message: 'Court 3 is booked, see you there!' },
-      { author: 'Priya', message: 'On my way, 10 mins out.' },
-    ],
-  },
-  {
-    id: 2,
-    sport: 'Cricket',
-    sessionType: 'Small Group',
-    host: 'Priya',
-    time: 'Tomorrow, 6:30 AM',
-    location: 'Navrangpura, Ahmedabad',
-    slotsLeft: 5,
-    maxPlayers: 10,
-    attendees: ['Rohan', 'Alex'],
-    chatPreview: [
-      { author: 'Priya', message: 'Bring your own bat if you have one.' },
-      { author: 'Rohan', message: 'Got it, see you at the ground!' },
-    ],
-  },
-  {
-    id: 3,
-    sport: 'Football',
-    sessionType: '1-on-1',
-    host: 'Arjun',
-    time: 'Today, 7:00 PM',
-    location: 'Bandra, Mumbai',
-    slotsLeft: 1,
-    maxPlayers: 2,
-    attendees: ['Dev'],
-    chatPreview: [
-      { author: 'Arjun', message: 'Turf is confirmed for 7 PM.' },
-      { author: 'Dev', message: 'Perfect, I will be there.' },
-    ],
-  },
 ];
 
 const DEFAULT_SPORTS = [
@@ -128,11 +150,65 @@ function App() {
   const [findSessionTypeFilter, setFindSessionTypeFilter] = useState('');
   const [groupSessionsPlayed] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [loginError, setLoginError] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [createSessionError, setCreateSessionError] = useState('');
   const inputRefs = useRef([]);
 
-  const handleSendOtp = (e) => {
+  const fetchSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/sessions?select=*&order=scheduled_at.asc`,
+        {
+          headers: {
+            apikey: supabaseAnonKey,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const data = await response.json();
+      console.log('Sessions fetch response:', {
+        status: response.status,
+        ok: response.ok,
+        data,
+      });
+
+      if (!response.ok) {
+        setSessions([]);
+      } else {
+        setSessions((Array.isArray(data) ? data : []).map(mapSessionFromDb));
+      }
+    } catch (err) {
+      console.log('Sessions fetch error:', err);
+      setSessions([]);
+    }
+
+    setSessionsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (step === 'home') {
+      fetchSessions();
+    }
+  }, [step, fetchSessions]);
+
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!phone.trim()) return;
+
+    setLoginError('');
+    const formattedPhone = formatPhone(phone);
+    const { error } =
+      (await supabase.auth.signInWithOtp({ phone: formattedPhone })) ?? {};
+
+    if (error) {
+      setLoginError(error.message);
+    }
+
     setStep('otp');
   };
 
@@ -166,8 +242,31 @@ function App() {
     inputRefs.current[Math.min(pasted.length, 5)]?.focus();
   };
 
-  const handleVerify = (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
+    setOtpError('');
+
+    const formattedPhone = formatPhone(phone);
+    const { data, error } =
+      (await supabase.auth.verifyOtp({
+        phone: formattedPhone,
+        token: otp.join(''),
+        type: 'sms',
+      })) ?? {};
+
+    if (error) {
+      setOtpError(error.message);
+    } else if (data?.user) {
+      const { error: profileError } = await supabase.from('profiles').upsert({
+        id: data.user.id,
+        phone: formattedPhone,
+      });
+
+      if (profileError) {
+        setOtpError(profileError.message);
+      }
+    }
+
     setStep('onboarding');
   };
 
@@ -236,7 +335,7 @@ function App() {
     setStep('home');
   };
 
-  const selectedSession = SAMPLE_SESSIONS.find(
+  const selectedSession = sessions.find(
     (session) => session.id === selectedSessionId
   );
 
@@ -244,8 +343,41 @@ function App() {
     setCreateSessionSport(name);
   };
 
-  const handleCreateSession = (e) => {
+  const handleCreateSession = async (e) => {
     e.preventDefault();
+    setCreateSessionError('');
+
+    const scheduledAt = datetimeLocalToISO(sessionDateTime);
+    if (!scheduledAt) {
+      setCreateSessionError('Please select a date and time.');
+      return;
+    }
+
+    const isOneOnOne = createSessionType === '1-on-1';
+    const parsedMaxPlayers = isOneOnOne ? 2 : parseInt(maxPlayers, 10);
+    const slotsRemaining = isOneOnOne ? 1 : parsedMaxPlayers;
+
+    const { error } =
+      (await supabase.from('sessions').insert({
+        sport: createSessionSport,
+        session_type: createSessionType,
+        scheduled_at: scheduledAt,
+        venue,
+        max_players: parsedMaxPlayers,
+        slots_remaining: slotsRemaining,
+        city,
+      })) ?? {};
+
+    if (error) {
+      setCreateSessionError(error.message);
+    } else {
+      setCreateSessionSport('');
+      setCreateSessionType('');
+      setSessionDateTime('');
+      setVenue('');
+      setMaxPlayers('');
+    }
+
     setStep('home');
   };
 
@@ -309,11 +441,6 @@ function App() {
           </span>
           <h1 className="session-detail__title">{selectedSession.sport}</h1>
 
-          <div className="session-detail__host">
-            <span className="session-detail__host-name">{selectedSession.host}</span>
-            <span className="session-detail__host-badge">Host</span>
-          </div>
-
           <p className="session-detail__info">{selectedSession.time}</p>
           <p className="session-detail__info">{selectedSession.location}</p>
           <p className="session-detail__slots">
@@ -349,12 +476,16 @@ function App() {
           <section className="session-detail__section">
             <h2 className="session-detail__section-title">Group Chat</h2>
             <div className="session-detail__chat">
-              {selectedSession.chatPreview.map((msg) => (
-                <div key={`${msg.author}-${msg.message}`} className="session-detail__message">
-                  <span className="session-detail__message-author">{msg.author}</span>
-                  <p className="session-detail__message-text">{msg.message}</p>
-                </div>
-              ))}
+              {selectedSession.chatPreview.length > 0 ? (
+                selectedSession.chatPreview.map((msg) => (
+                  <div key={`${msg.author}-${msg.message}`} className="session-detail__message">
+                    <span className="session-detail__message-author">{msg.author}</span>
+                    <p className="session-detail__message-text">{msg.message}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="session-detail__chat-empty">No messages yet.</p>
+              )}
             </div>
           </section>
 
@@ -538,6 +669,9 @@ function App() {
             <button type="submit" className="login__button create__submit">
               Create Session
             </button>
+            {createSessionError && (
+              <p className="login__error">{createSessionError}</p>
+            )}
           </form>
         </main>
       </div>
@@ -589,35 +723,42 @@ function App() {
         <main className="home__main">
           {activeTab === 'live' ? (
             <div className="home__sessions">
-              {SAMPLE_SESSIONS.map((session) => (
-                <article
-                  key={session.id}
-                  className="home__session-card home__session-card--clickable"
-                  onClick={() => handleOpenSession(session.id)}
-                >
-                  <div className="home__session-top">
-                    <div className="home__session-heading">
-                      <span className="home__session-type">
-                        {session.sessionType.toUpperCase()}
-                      </span>
-                      <h2 className="home__session-sport">{session.sport}</h2>
+              {sessionsLoading ? (
+                <p className="home__loading">Loading sessions...</p>
+              ) : sessions.length === 0 ? (
+                <p className="home__empty">
+                  No sessions near you yet. Be the first to create one!
+                </p>
+              ) : (
+                sessions.map((session) => (
+                  <article
+                    key={session.id}
+                    className="home__session-card home__session-card--clickable"
+                    onClick={() => handleOpenSession(session.id)}
+                  >
+                    <div className="home__session-top">
+                      <div className="home__session-heading">
+                        <span className="home__session-type">
+                          {session.sessionType.toUpperCase()}
+                        </span>
+                        <h2 className="home__session-sport">{session.sport}</h2>
+                      </div>
+                      <button
+                        type="button"
+                        className="home__session-join"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Join
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="home__session-join"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Join
-                    </button>
-                  </div>
-                  <p className="home__session-detail">Hosted by {session.host}</p>
-                  <p className="home__session-detail">{session.time}</p>
-                  <p className="home__session-detail">{session.location}</p>
-                  <p className="home__session-detail">
-                    {session.slotsLeft} slots left
-                  </p>
-                </article>
-              ))}
+                    <p className="home__session-detail">{session.time}</p>
+                    <p className="home__session-detail">{session.location}</p>
+                    <p className="home__session-detail">
+                      {session.slotsLeft} slots left
+                    </p>
+                  </article>
+                ))
+              )}
             </div>
           ) : (
             <div className="find">
@@ -835,6 +976,7 @@ function App() {
             <button type="submit" className="login__button">
               Verify
             </button>
+            {otpError && <p className="login__error">{otpError}</p>}
           </form>
 
           <button type="button" className="login__link" onClick={handleResend}>
@@ -863,6 +1005,7 @@ function App() {
           <button type="submit" className="login__button">
             Send OTP
           </button>
+          {loginError && <p className="login__error">{loginError}</p>}
         </form>
       </div>
     </div>

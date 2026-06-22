@@ -1,6 +1,103 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { supabase } from './supabase';
 import App from './App';
+
+const mockSessions = [
+  {
+    id: 'session-1',
+    sport: 'Badminton',
+    session_type: 'Small Group',
+    scheduled_at: new Date().toISOString(),
+    venue: 'Satellite',
+    city: 'Ahmedabad',
+    max_players: 6,
+    slots_remaining: 3,
+  },
+  {
+    id: 'session-2',
+    sport: 'Cricket',
+    session_type: 'Small Group',
+    scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+    venue: 'Navrangpura',
+    city: 'Ahmedabad',
+    max_players: 10,
+    slots_remaining: 5,
+  },
+  {
+    id: 'session-3',
+    sport: 'Football',
+    session_type: '1-on-1',
+    scheduled_at: new Date().toISOString(),
+    venue: 'Bandra',
+    city: 'Mumbai',
+    max_players: 2,
+    slots_remaining: 1,
+  },
+];
+
+jest.mock('./supabase', () => ({
+  supabaseUrl: 'https://test.supabase.co',
+  supabaseAnonKey: 'test-anon-key',
+  supabase: {
+    auth: {
+      signInWithOtp: jest.fn(),
+      verifyOtp: jest.fn(),
+    },
+    from: jest.fn(),
+  },
+}));
+
+beforeEach(() => {
+  supabase.auth.signInWithOtp.mockResolvedValue({ error: null });
+  supabase.auth.verifyOtp.mockResolvedValue({
+    data: { user: { id: 'test-user-id' } },
+    error: null,
+  });
+  global.fetch = jest.fn((url) => {
+    if (String(url).includes('/rest/v1/sessions')) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockSessions),
+      });
+    }
+    return Promise.reject(new Error(`Unhandled fetch: ${url}`));
+  });
+  supabase.from.mockImplementation((table) => {
+    if (table === 'sessions') {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: null }),
+      };
+    }
+    return {
+      upsert: jest.fn().mockResolvedValue({ error: null }),
+    };
+  });
+});
+
+async function sendOtp() {
+  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
+  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
+  await screen.findByRole('button', { name: 'Verify' });
+}
+
+async function verifyOtp() {
+  await sendOtp();
+  await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  await screen.findByText('Tell us about you');
+}
+
+async function goToHomeScreen() {
+  await verifyOtp();
+  await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
+  await userEvent.type(screen.getByPlaceholderText('Age'), '25');
+  await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
+  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  await screen.findByRole('button', { name: 'Live Sessions' });
+  await screen.findByRole('heading', { name: 'Badminton' });
+}
 
 test('renders login page', () => {
   render(<App />);
@@ -12,9 +109,7 @@ test('renders login page', () => {
 
 test('shows OTP screen after sending code', async () => {
   render(<App />);
-
-  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
-  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
+  await sendOtp();
 
   expect(screen.getByText('Enter the 6-digit code sent to 5551234567')).toBeInTheDocument();
   expect(screen.getAllByRole('textbox')).toHaveLength(6);
@@ -24,10 +119,7 @@ test('shows OTP screen after sending code', async () => {
 
 test('shows onboarding screen after verifying OTP', async () => {
   render(<App />);
-
-  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
-  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  await verifyOtp();
 
   expect(screen.getByText('Tell us about you')).toBeInTheDocument();
   expect(screen.getByPlaceholderText('First Name')).toBeInTheDocument();
@@ -38,10 +130,7 @@ test('shows onboarding screen after verifying OTP', async () => {
 
 test('shows sports selection screen after onboarding', async () => {
   render(<App />);
-
-  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
-  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  await verifyOtp();
   await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
   await userEvent.type(screen.getByPlaceholderText('Age'), '25');
   await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
@@ -71,27 +160,14 @@ test('shows home screen after completing onboarding', async () => {
   expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Live Sessions' })).toHaveClass('home__tab--active');
   expect(screen.getByRole('button', { name: 'Find Players' })).toBeInTheDocument();
-  expect(screen.getByText('Badminton')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Badminton' })).toBeInTheDocument();
   expect(screen.getAllByText('SMALL GROUP')).toHaveLength(2);
   expect(screen.getByText('1-ON-1')).toBeInTheDocument();
-  expect(screen.getByText('Hosted by Rahul')).toBeInTheDocument();
-  expect(screen.getByText('Today, 4:00 PM')).toBeInTheDocument();
   expect(screen.getByText('Satellite, Ahmedabad')).toBeInTheDocument();
   expect(screen.getByText('3 slots left')).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Join' })).toHaveLength(3);
   expect(screen.getByRole('button', { name: 'Create new session' })).toBeInTheDocument();
 });
-
-async function goToHomeScreen() {
-  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
-  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
-  await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
-  await userEvent.type(screen.getByPlaceholderText('Age'), '25');
-  await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
-  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-}
 
 test('shows create session screen from home fab', async () => {
   render(<App />);
@@ -138,10 +214,7 @@ test('shows profile screen from home profile icon', async () => {
 
 test('shows selected sports as pills on profile', async () => {
   render(<App />);
-
-  await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
-  await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Verify' }));
+  await verifyOtp();
   await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
   await userEvent.type(screen.getByPlaceholderText('Age'), '25');
   await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
@@ -182,18 +255,16 @@ test('opens session detail when tapping a session card', async () => {
   render(<App />);
   await goToHomeScreen();
 
-  await userEvent.click(screen.getByText('Hosted by Rahul'));
+  await userEvent.click(screen.getByRole('heading', { name: 'Badminton' }));
 
   expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Badminton' })).toBeInTheDocument();
   expect(screen.getByText('SMALL GROUP')).toBeInTheDocument();
-  expect(screen.getByText('Host')).toBeInTheDocument();
-  expect(screen.getByText('Today, 4:00 PM')).toBeInTheDocument();
   expect(screen.getByText('Satellite, Ahmedabad')).toBeInTheDocument();
   expect(screen.getByText('3 of 6 slots remaining')).toBeInTheDocument();
   expect(screen.getByText("Who's Coming")).toBeInTheDocument();
   expect(screen.getByText('Group Chat')).toBeInTheDocument();
-  expect(screen.getByText('Court 3 is booked, see you there!')).toBeInTheDocument();
+  expect(screen.getByText('No messages yet.')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Join Session' })).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
