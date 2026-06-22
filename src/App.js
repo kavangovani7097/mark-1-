@@ -130,6 +130,22 @@ const SAMPLE_PLAYERS = [
 
 const GROUP_SESSIONS_TO_UNLOCK_ONE_ON_ONE = 4;
 
+const PROFILE_STORAGE_KEY = 'mark1_profile';
+
+const loadStoredProfile = () => {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const saveStoredProfile = (profile) => {
+  localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+};
+
 function App() {
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState('login');
@@ -156,6 +172,16 @@ function App() {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [createSessionError, setCreateSessionError] = useState('');
   const inputRefs = useRef([]);
+
+  useEffect(() => {
+    const stored = loadStoredProfile();
+    if (!stored) return;
+
+    if (stored.first_name) setFirstName(stored.first_name);
+    if (stored.age != null) setAge(String(stored.age));
+    if (stored.city) setCity(stored.city);
+    if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
+  }, []);
 
   const fetchSessions = useCallback(async () => {
     setSessionsLoading(true);
@@ -247,7 +273,7 @@ function App() {
     setOtpError('');
 
     const formattedPhone = formatPhone(phone);
-    const { data, error } =
+    const { error } =
       (await supabase.auth.verifyOtp({
         phone: formattedPhone,
         token: otp.join(''),
@@ -256,15 +282,6 @@ function App() {
 
     if (error) {
       setOtpError(error.message);
-    } else if (data?.user) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: data.user.id,
-        phone: formattedPhone,
-      });
-
-      if (profileError) {
-        setOtpError(profileError.message);
-      }
     }
 
     setStep('onboarding');
@@ -310,6 +327,14 @@ function App() {
   };
 
   const handleSportsContinue = () => {
+    const profileData = {
+      first_name: firstName,
+      age: parseInt(age, 10),
+      city,
+      sports: selectedSports,
+    };
+
+    saveStoredProfile(profileData);
     setStep('home');
   };
 

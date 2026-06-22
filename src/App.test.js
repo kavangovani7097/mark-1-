@@ -49,6 +49,7 @@ jest.mock('./supabase', () => ({
 }));
 
 beforeEach(() => {
+  localStorage.clear();
   supabase.auth.signInWithOtp.mockResolvedValue({ error: null });
   supabase.auth.verifyOtp.mockResolvedValue({
     data: { user: { id: 'test-user-id' } },
@@ -70,9 +71,7 @@ beforeEach(() => {
         insert: jest.fn().mockResolvedValue({ error: null }),
       };
     }
-    return {
-      upsert: jest.fn().mockResolvedValue({ error: null }),
-    };
+    return {};
   });
 });
 
@@ -221,6 +220,7 @@ test('shows selected sports as pills on profile', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
   await userEvent.click(screen.getByRole('button', { name: 'Tennis' }));
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  await screen.findByRole('button', { name: 'Live Sessions' });
   await userEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
   expect(screen.getByText('Tennis')).toBeInTheDocument();

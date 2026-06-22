@@ -291,6 +291,10 @@
   padding: 1.25rem 1.5rem;
 }
 
+.home__error {
+  margin-bottom: 1rem;
+}
+
 .home__sessions {
   display: flex;
   flex-direction: column;
