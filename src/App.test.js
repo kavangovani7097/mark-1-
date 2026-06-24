@@ -100,8 +100,8 @@ async function goToHomeScreen() {
 
 test('renders login page', () => {
   render(<App />);
-  expect(screen.getByText('MARK 1')).toBeInTheDocument();
-  expect(screen.getByText('Find your people. Play your sport.')).toBeInTheDocument();
+  expect(screen.getByText('SQUADR')).toBeInTheDocument();
+  expect(screen.getByText('Find your crew. Play your sport.')).toBeInTheDocument();
   expect(screen.getByPlaceholderText('Phone number')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Send OTP' })).toBeInTheDocument();
 });

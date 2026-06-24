@@ -19,6 +19,7 @@
 
 .login__logo {
   margin: 0 0 0.75rem;
+  font-family: 'Space Grotesk', sans-serif;
   font-size: clamp(2.5rem, 10vw, 3.5rem);
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -234,6 +235,7 @@
 }
 
 .home__brand {
+  font-family: 'Space Grotesk', sans-serif;
   font-size: 1.125rem;
   font-weight: 800;
   letter-spacing: 0.12em;
