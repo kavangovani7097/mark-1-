@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from './supabase';
+import SquadrLogo from './SquadrLogo';
 import './App.css';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
@@ -707,7 +708,7 @@ function App() {
     return (
       <div className="home">
         <header className="home__header">
-          <span className="home__brand">SQUADR</span>
+          <SquadrLogo size="small" />
           <button
             type="button"
             className="home__profile"
@@ -883,7 +884,9 @@ function App() {
     return (
       <div className="login">
         <div className="login__content login__content--wide">
-          <h1 className="login__logo">SQUADR</h1>
+          <h1 className="login__logo">
+            <SquadrLogo size="large" />
+          </h1>
           <h2 className="login__title">What do you play?</h2>
 
           <div className="login__sports-grid">
@@ -925,7 +928,9 @@ function App() {
     return (
       <div className="login">
         <div className="login__content">
-          <h1 className="login__logo">SQUADR</h1>
+          <h1 className="login__logo">
+            <SquadrLogo size="large" />
+          </h1>
           <h2 className="login__title">Tell us about you</h2>
 
           <form className="login__form" onSubmit={handleOnboardingContinue}>
@@ -973,7 +978,9 @@ function App() {
     return (
       <div className="login">
         <div className="login__content">
-          <h1 className="login__logo">SQUADR</h1>
+          <h1 className="login__logo">
+            <SquadrLogo size="large" />
+          </h1>
           <p className="login__otp-message">
             Enter the 6-digit code sent to {phone}
           </p>
@@ -1015,8 +1022,12 @@ function App() {
   return (
     <div className="login">
       <div className="login__content">
-        <h1 className="login__logo">SQUADR</h1>
-        <p className="login__tagline">Find your crew. Play your sport.</p>
+        <div className="login__brand">
+          <h1 className="login__logo">
+            <SquadrLogo size="large" />
+          </h1>
+          <p className="login__tagline">Find your crew. Play your sport.</p>
+        </div>
 
         <form className="login__form" onSubmit={handleSendOtp}>
           <input
