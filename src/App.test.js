@@ -90,6 +90,17 @@ beforeEach(() => {
         json: () => Promise.resolve(mockSessions),
       });
     }
+    if (
+      String(url).includes('/rest/v1/instant_requests') ||
+      String(url).includes('/rest/v1/instant_matches') ||
+      String(url).includes('/rest/v1/messages')
+    ) {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([]),
+      });
+    }
     return Promise.reject(new Error(`Unhandled fetch: ${url}`));
   });
   supabase.from.mockImplementation((table) => {

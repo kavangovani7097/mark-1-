@@ -2,6 +2,15 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from './supabase';
 import SquadrLogo from './SquadrLogo';
 import VenueAutocomplete from './VenueAutocomplete';
+import {
+  acceptRequest,
+  createInstantRequest,
+  fetchMatches,
+  fetchMessages,
+  fetchOpenRequests,
+  sendMessage,
+  updateRequestStatus,
+} from './instantPlay';
 import './App.css';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
@@ -132,6 +141,16 @@ const SAMPLE_PLAYERS = [
 
 const GROUP_SESSIONS_TO_UNLOCK_ONE_ON_ONE = 4;
 
+const PLAYER_COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const INSTANT_SEARCH_SECONDS = 15 * 60;
+
+const formatCountdown = (totalSeconds) => {
+  const safe = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
+
 const PROFILE_STORAGE_KEY = 'mark1_profile';
 
 const loadStoredProfile = () => {
@@ -173,6 +192,23 @@ function App() {
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [createSessionError, setCreateSessionError] = useState('');
+
+  const [openToPlay, setOpenToPlay] = useState(false);
+  const [instantSport, setInstantSport] = useState('');
+  const [instantPlayersNeeded, setInstantPlayersNeeded] = useState(null);
+  const [instantLocationPref, setInstantLocationPref] = useState('');
+  const [activeRequestId, setActiveRequestId] = useState(null);
+  const [instantMatches, setInstantMatches] = useState([]);
+  const [searchSecondsLeft, setSearchSecondsLeft] = useState(INSTANT_SEARCH_SECONDS);
+  const [instantError, setInstantError] = useState('');
+  const [incomingRequest, setIncomingRequest] = useState(null);
+  const [dismissedRequestIds, setDismissedRequestIds] = useState([]);
+  const [chatRoomId, setChatRoomId] = useState(null);
+  const [chatRequesterName, setChatRequesterName] = useState('');
+  const [chatPlayers, setChatPlayers] = useState([]);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+
   const inputRefs = useRef([]);
 
   useEffect(() => {
@@ -439,6 +475,249 @@ function App() {
     inputRefs.current[0]?.focus();
   };
 
+  const resetInstantFlow = useCallback(() => {
+    setInstantSport('');
+    setInstantPlayersNeeded(null);
+    setInstantLocationPref('');
+    setActiveRequestId(null);
+    setInstantMatches([]);
+    setSearchSecondsLeft(INSTANT_SEARCH_SECONDS);
+    setInstantError('');
+  }, []);
+
+  const enterGroupChat = useCallback(({ roomId, requesterName }) => {
+    setChatRoomId(roomId);
+    setChatRequesterName(requesterName);
+    setChatPlayers(requesterName ? [requesterName] : []);
+    setChatMessages([]);
+    setChatInput('');
+    setStep('groupChat');
+  }, []);
+
+  const handleOpenInstantFind = () => {
+    resetInstantFlow();
+    setStep('instantSport');
+  };
+
+  const handleInstantSelectSport = (sport) => {
+    setInstantSport(sport);
+    setStep('instantCount');
+  };
+
+  const handleInstantSelectCount = (count) => {
+    setInstantPlayersNeeded(count);
+    setStep('instantLocation');
+  };
+
+  const handleBroadcastRequest = async (e) => {
+    e.preventDefault();
+    setInstantError('');
+
+    try {
+      const request = await createInstantRequest({
+        sport: instantSport,
+        playersNeeded: instantPlayersNeeded,
+        locationPref: instantLocationPref,
+        requesterName: firstName,
+      });
+
+      if (!request?.id) {
+        setInstantError('Could not start search. Please try again.');
+        return;
+      }
+
+      setActiveRequestId(request.id);
+      setInstantMatches([]);
+      setSearchSecondsLeft(INSTANT_SEARCH_SECONDS);
+      setStep('instantSearching');
+    } catch {
+      setInstantError('Could not start search. Please try again.');
+    }
+  };
+
+  const handleCancelSearch = useCallback(async () => {
+    if (activeRequestId) {
+      try {
+        await updateRequestStatus(activeRequestId, 'cancelled');
+      } catch {
+        // ignore — still return home
+      }
+    }
+    resetInstantFlow();
+    setStep('home');
+  }, [activeRequestId, resetInstantFlow]);
+
+  const handleAcceptIncoming = async () => {
+    if (!incomingRequest) return;
+
+    const request = incomingRequest;
+    setIncomingRequest(null);
+    setDismissedRequestIds((prev) => [...prev, request.id]);
+
+    try {
+      await acceptRequest({ requestId: request.id, playerName: firstName });
+    } catch {
+      // ignore — still enter chat optimistically
+    }
+
+    enterGroupChat({ roomId: request.id, requesterName: request.requester_name });
+  };
+
+  const handleDeclineIncoming = () => {
+    if (incomingRequest) {
+      setDismissedRequestIds((prev) => [...prev, incomingRequest.id]);
+    }
+    setIncomingRequest(null);
+  };
+
+  const handleSendChat = async (e) => {
+    e.preventDefault();
+    const text = chatInput.trim();
+    if (!text || !chatRoomId) return;
+
+    setChatInput('');
+    try {
+      await sendMessage({ roomId: chatRoomId, senderName: firstName, text });
+      const msgs = await fetchMessages(chatRoomId);
+      setChatMessages(msgs);
+    } catch {
+      // ignore — next poll will reconcile
+    }
+  };
+
+  const handleLeaveChat = () => {
+    setChatRoomId(null);
+    setChatRequesterName('');
+    setChatPlayers([]);
+    setChatMessages([]);
+    setChatInput('');
+    resetInstantFlow();
+    setStep('home');
+  };
+
+  useEffect(() => {
+    if (!openToPlay || step !== 'home') return undefined;
+
+    let active = true;
+    const poll = async () => {
+      try {
+        const requests = await fetchOpenRequests();
+        if (!active) return;
+
+        const match = requests.find(
+          (request) =>
+            request.requester_name !== firstName &&
+            (!request.sport || selectedSports.includes(request.sport)) &&
+            request.id !== activeRequestId &&
+            !dismissedRequestIds.includes(request.id)
+        );
+
+        if (match) {
+          setIncomingRequest((prev) => prev ?? match);
+        }
+      } catch {
+        // ignore polling errors
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [
+    openToPlay,
+    step,
+    firstName,
+    selectedSports,
+    activeRequestId,
+    dismissedRequestIds,
+  ]);
+
+  useEffect(() => {
+    if (step !== 'instantSearching' || !activeRequestId) return undefined;
+
+    let active = true;
+    const poll = async () => {
+      try {
+        const matches = await fetchMatches(activeRequestId);
+        if (!active) return;
+
+        setInstantMatches(matches);
+        if (instantPlayersNeeded && matches.length >= instantPlayersNeeded) {
+          try {
+            await updateRequestStatus(activeRequestId, 'matched');
+          } catch {
+            // ignore
+          }
+          enterGroupChat({ roomId: activeRequestId, requesterName: firstName });
+        }
+      } catch {
+        // ignore polling errors
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [step, activeRequestId, instantPlayersNeeded, firstName, enterGroupChat]);
+
+  useEffect(() => {
+    if (step !== 'instantSearching') return undefined;
+
+    const interval = setInterval(() => {
+      setSearchSecondsLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step]);
+
+  useEffect(() => {
+    if (step === 'instantSearching' && searchSecondsLeft === 0) {
+      handleCancelSearch();
+    }
+  }, [step, searchSecondsLeft, handleCancelSearch]);
+
+  useEffect(() => {
+    if (step !== 'groupChat' || !chatRoomId) return undefined;
+
+    let active = true;
+    const poll = async () => {
+      try {
+        const [msgs, matches] = await Promise.all([
+          fetchMessages(chatRoomId),
+          fetchMatches(chatRoomId),
+        ]);
+        if (!active) return;
+
+        setChatMessages(msgs);
+        setChatPlayers((prev) => {
+          const names = [
+            chatRequesterName,
+            ...matches.map((entry) => entry.player_name),
+          ].filter(Boolean);
+          const unique = [...new Set(names)];
+          return unique.length ? unique : prev;
+        });
+      } catch {
+        // ignore polling errors
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [step, chatRoomId, chatRequesterName]);
+
+  const instantSportOptions =
+    selectedSports.length > 0 ? selectedSports : DEFAULT_SPORTS;
+
   if (step === 'sessionDetail' && selectedSession) {
     return (
       <div className="session-detail">
@@ -703,29 +982,332 @@ function App() {
     );
   }
 
+  if (step === 'instantSport') {
+    return (
+      <div className="create">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={() => {
+              resetInstantFlow();
+              setStep('home');
+            }}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="create__title">Find Players</h1>
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="create__main">
+          <p className="instant__step">Step 1 of 3</p>
+          <h2 className="instant__question">What do you want to play?</h2>
+          <div className="login__sports-grid create__sports-grid">
+            {instantSportOptions.map((name) => {
+              const isSelected = instantSport === name;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  className={`login__sport-card${isSelected ? ' login__sport-card--selected' : ''}`}
+                  onClick={() => handleInstantSelectSport(name)}
+                  aria-pressed={isSelected}
+                  aria-label={name}
+                >
+                  <span className="login__sport-name">{name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 'instantCount') {
+    return (
+      <div className="create">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={() => setStep('instantSport')}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="create__title">Find Players</h1>
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="create__main">
+          <p className="instant__step">Step 2 of 3</p>
+          <h2 className="instant__question">How many players do you need?</h2>
+          <div className="instant__count-grid">
+            {PLAYER_COUNT_OPTIONS.map((count) => {
+              const isSelected = instantPlayersNeeded === count;
+              return (
+                <button
+                  key={count}
+                  type="button"
+                  className={`instant__count-option${isSelected ? ' instant__count-option--selected' : ''}`}
+                  onClick={() => handleInstantSelectCount(count)}
+                  aria-pressed={isSelected}
+                >
+                  {count}
+                </button>
+              );
+            })}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 'instantLocation') {
+    return (
+      <div className="create">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={() => setStep('instantCount')}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="create__title">Find Players</h1>
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="create__main">
+          <form className="create__form" onSubmit={handleBroadcastRequest}>
+            <section className="create__section">
+              <p className="instant__step">Step 3 of 3</p>
+              <h2 className="instant__question">Where do you want to play?</h2>
+              <input
+                type="text"
+                className="login__input"
+                placeholder="Location preference (e.g. near Satellite)"
+                value={instantLocationPref}
+                onChange={(e) => setInstantLocationPref(e.target.value)}
+              />
+            </section>
+
+            <div className="instant__summary">
+              <span className="instant__summary-item">{instantSport}</span>
+              <span className="instant__summary-item">
+                {instantPlayersNeeded} player
+                {instantPlayersNeeded === 1 ? '' : 's'}
+              </span>
+            </div>
+
+            <button
+              type="submit"
+              className="login__button create__submit"
+              disabled={!instantLocationPref.trim()}
+            >
+              Broadcast Request
+            </button>
+            {instantError && <p className="login__error">{instantError}</p>}
+          </form>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 'instantSearching') {
+    return (
+      <div className="instant-search">
+        <div className="instant-search__content">
+          <div className="instant-search__pulse" aria-hidden="true">
+            <span className="instant-search__pulse-ring" />
+            <span className="instant-search__pulse-core" />
+          </div>
+
+          <h1 className="instant-search__title">Searching...</h1>
+          <p className="instant-search__subtitle">
+            Looking for {instantSport} players near {instantLocationPref}
+          </p>
+
+          <div className="instant-search__counter">
+            <span className="instant-search__counter-value">
+              {instantMatches.length}
+            </span>
+            <span className="instant-search__counter-label">
+              of {instantPlayersNeeded} players joined
+            </span>
+          </div>
+
+          <div className="instant-search__timer" aria-label="Time remaining">
+            {formatCountdown(searchSecondsLeft)}
+          </div>
+
+          {instantMatches.length > 0 && (
+            <div className="instant-search__players">
+              {instantMatches.map((entry) => (
+                <span key={entry.id} className="instant-search__player">
+                  {entry.player_name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="instant-search__cancel"
+            onClick={handleCancelSearch}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'groupChat') {
+    return (
+      <div className="chat">
+        <header className="chat__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={handleLeaveChat}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="chat__header-info">
+            <h1 className="chat__title">Group Chat</h1>
+            <div className="chat__players">
+              {chatPlayers.map((name) => (
+                <span key={name} className="chat__player-pill">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        </header>
+
+        <main className="chat__messages">
+          {chatMessages.length === 0 ? (
+            <p className="chat__empty">Say hello to your new crew!</p>
+          ) : (
+            chatMessages.map((message) => {
+              const isMine = message.sender_name === firstName;
+              return (
+                <div
+                  key={message.id}
+                  className={`chat__message${isMine ? ' chat__message--mine' : ''}`}
+                >
+                  {!isMine && (
+                    <span className="chat__message-author">
+                      {message.sender_name}
+                    </span>
+                  )}
+                  <p className="chat__message-text">{message.text}</p>
+                </div>
+              );
+            })
+          )}
+        </main>
+
+        <form className="chat__composer" onSubmit={handleSendChat}>
+          <input
+            type="text"
+            className="login__input chat__input"
+            placeholder="Type a message"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            aria-label="Message"
+          />
+          <button
+            type="submit"
+            className="chat__send"
+            disabled={!chatInput.trim()}
+          >
+            Send
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   if (step === 'home') {
     return (
       <div className="home">
         <header className="home__header">
           <SquadrLogo size="small" />
-          <button
-            type="button"
-            className="home__profile"
-            aria-label="Profile"
-            onClick={handleOpenProfile}
-          >
-            <svg
-              className="home__profile-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              aria-hidden="true"
+          <div className="home__header-actions">
+            <button
+              type="button"
+              className={`home__toggle${openToPlay ? ' home__toggle--on' : ''}`}
+              onClick={() => setOpenToPlay((prev) => !prev)}
+              aria-pressed={openToPlay}
+              aria-label="Open to Play"
             >
-              <circle cx="12" cy="8" r="4" />
-              <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" />
-            </svg>
-          </button>
+              <span className="home__toggle-text">Open to Play</span>
+              <span className="home__toggle-track" aria-hidden="true">
+                <span className="home__toggle-thumb" />
+              </span>
+            </button>
+            <button
+              type="button"
+              className="home__profile"
+              aria-label="Profile"
+              onClick={handleOpenProfile}
+            >
+              <svg
+                className="home__profile-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" />
+              </svg>
+            </button>
+          </div>
         </header>
 
         <nav className="home__tabs" aria-label="Home sections">
@@ -787,6 +1369,17 @@ function App() {
             </div>
           ) : (
             <div className="find">
+              <button
+                type="button"
+                className="find__instant-btn"
+                onClick={handleOpenInstantFind}
+              >
+                <span className="find__instant-bolt" aria-hidden="true">
+                  ⚡
+                </span>
+                Find Players Now
+              </button>
+
               <div className="find__filters">
                 <select
                   className={`login__select find__sport-select${findSportFilter ? '' : ' login__select--placeholder'}`}
@@ -874,6 +1467,44 @@ function App() {
           >
             +
           </button>
+        )}
+
+        {incomingRequest && (
+          <div className="incoming" role="dialog" aria-modal="true">
+            <div className="incoming__card">
+              <span className="incoming__badge">Wants to play now</span>
+              <h2 className="incoming__name">
+                {incomingRequest.requester_name}
+              </h2>
+              <p className="incoming__sport">{incomingRequest.sport}</p>
+              {incomingRequest.location_pref && (
+                <p className="incoming__location">
+                  {incomingRequest.location_pref}
+                </p>
+              )}
+              <p className="incoming__needed">
+                Needs {incomingRequest.players_needed} player
+                {incomingRequest.players_needed === 1 ? '' : 's'}
+              </p>
+
+              <div className="incoming__actions">
+                <button
+                  type="button"
+                  className="incoming__decline"
+                  onClick={handleDeclineIncoming}
+                >
+                  Decline
+                </button>
+                <button
+                  type="button"
+                  className="incoming__accept"
+                  onClick={handleAcceptIncoming}
+                >
+                  Accept
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );
