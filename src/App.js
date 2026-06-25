@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase, supabaseUrl, supabaseAnonKey } from './supabase';
 import SquadrLogo from './SquadrLogo';
+import VenueAutocomplete from './VenueAutocomplete';
 import './App.css';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
@@ -162,6 +163,7 @@ function App() {
   const [createSessionType, setCreateSessionType] = useState('');
   const [sessionDateTime, setSessionDateTime] = useState('');
   const [venue, setVenue] = useState('');
+  const [venueAddress, setVenueAddress] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('');
   const [findSportFilter, setFindSportFilter] = useState('');
   const [findSessionTypeFilter, setFindSessionTypeFilter] = useState('');
@@ -401,6 +403,7 @@ function App() {
       setCreateSessionType('');
       setSessionDateTime('');
       setVenue('');
+      setVenueAddress('');
       setMaxPlayers('');
     }
 
@@ -668,12 +671,10 @@ function App() {
 
             <section className="create__section">
               <h2 className="create__label">Venue</h2>
-              <input
-                type="text"
-                className="login__input"
-                placeholder="Where are you playing?"
+              <VenueAutocomplete
                 value={venue}
-                onChange={(e) => setVenue(e.target.value)}
+                onVenueChange={setVenue}
+                onAddressChange={setVenueAddress}
               />
             </section>
 

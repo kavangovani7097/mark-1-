@@ -1,5 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+jest.mock('./supabase', () => ({
+  supabaseUrl: 'https://test.supabase.co',
+  supabaseAnonKey: 'test-anon-key',
+  supabase: {
+    auth: {
+      signInWithOtp: jest.fn(),
+      verifyOtp: jest.fn(),
+    },
+    from: jest.fn(),
+  },
+}));
+
 import { supabase } from './supabase';
 import App from './App';
 
@@ -48,8 +61,22 @@ jest.mock('./supabase', () => ({
   },
 }));
 
+
 beforeEach(() => {
   localStorage.clear();
+  window.google = {
+    maps: {
+      places: {
+        Autocomplete: jest.fn(function Autocomplete() {
+          this.addListener = jest.fn();
+          this.getPlace = jest.fn(() => ({}));
+        }),
+      },
+      event: {
+        clearInstanceListeners: jest.fn(),
+      },
+    },
+  };
   supabase.auth.signInWithOtp.mockResolvedValue({ error: null });
   supabase.auth.verifyOtp.mockResolvedValue({
     data: { user: { id: 'test-user-id' } },
@@ -180,7 +207,7 @@ test('shows create session screen from home fab', async () => {
   expect(screen.getByRole('button', { name: '1-on-1' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Small Group' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Large Group' })).toBeInTheDocument();
-  expect(screen.getByPlaceholderText('Where are you playing?')).toBeInTheDocument();
+  expect(await screen.findByPlaceholderText('Where are you playing?')).toBeInTheDocument();
   expect(screen.queryByPlaceholderText('Max players')).not.toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Small Group' }));
