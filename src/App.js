@@ -151,6 +151,24 @@ const formatCountdown = (totalSeconds) => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
+const secondsUntil = (isoString) => {
+  if (!isoString) return INSTANT_SEARCH_SECONDS;
+  const diff = Math.floor((new Date(isoString).getTime() - Date.now()) / 1000);
+  if (Number.isNaN(diff)) return INSTANT_SEARCH_SECONDS;
+  return Math.max(0, diff);
+};
+
+const isRequestJoinable = (request, { sport, excludeName }) => {
+  if (!request) return false;
+  if (sport && request.sport !== sport) return false;
+  if (excludeName && request.requester_name === excludeName) return false;
+  if (request.status === 'cancelled') return false;
+  if (request.expires_at && new Date(request.expires_at).getTime() <= Date.now()) {
+    return false;
+  }
+  return true;
+};
+
 const PROFILE_STORAGE_KEY = 'mark1_profile';
 
 const loadStoredProfile = () => {
@@ -198,6 +216,9 @@ function App() {
   const [instantPlayersNeeded, setInstantPlayersNeeded] = useState(null);
   const [instantLocationPref, setInstantLocationPref] = useState('');
   const [activeRequestId, setActiveRequestId] = useState(null);
+  const [isRequester, setIsRequester] = useState(false);
+  const [activeRequesterName, setActiveRequesterName] = useState('');
+  const [existingRequests, setExistingRequests] = useState([]);
   const [instantMatches, setInstantMatches] = useState([]);
   const [searchSecondsLeft, setSearchSecondsLeft] = useState(INSTANT_SEARCH_SECONDS);
   const [instantError, setInstantError] = useState('');
@@ -480,6 +501,9 @@ function App() {
     setInstantPlayersNeeded(null);
     setInstantLocationPref('');
     setActiveRequestId(null);
+    setIsRequester(false);
+    setActiveRequesterName('');
+    setExistingRequests([]);
     setInstantMatches([]);
     setSearchSecondsLeft(INSTANT_SEARCH_SECONDS);
     setInstantError('');
@@ -509,8 +533,7 @@ function App() {
     setStep('instantLocation');
   };
 
-  const handleBroadcastRequest = async (e) => {
-    e.preventDefault();
+  const proceedBroadcast = useCallback(async () => {
     setInstantError('');
 
     try {
@@ -527,16 +550,77 @@ function App() {
       }
 
       setActiveRequestId(request.id);
+      setIsRequester(true);
+      setActiveRequesterName(firstName);
+      setExistingRequests([]);
       setInstantMatches([]);
       setSearchSecondsLeft(INSTANT_SEARCH_SECONDS);
       setStep('instantSearching');
     } catch {
       setInstantError('Could not start search. Please try again.');
     }
+  }, [instantSport, instantPlayersNeeded, instantLocationPref, firstName]);
+
+  const handleBroadcastRequest = async (e) => {
+    e.preventDefault();
+    setInstantError('');
+
+    // Before broadcasting, look for an existing open request for the same
+    // sport so two searchers get matched instead of both waiting.
+    try {
+      const requests = await fetchOpenRequests();
+      const matchingOpen = requests.filter((request) =>
+        isRequestJoinable(request, {
+          sport: instantSport,
+          excludeName: firstName,
+        })
+      );
+
+      if (matchingOpen.length > 0) {
+        setExistingRequests(matchingOpen);
+        setStep('instantExisting');
+        return;
+      }
+    } catch {
+      // ignore lookup errors and fall through to broadcasting a new request
+    }
+
+    await proceedBroadcast();
+  };
+
+  const joinRequest = useCallback(
+    async (request) => {
+      if (!request?.id) return;
+
+      setActiveRequestId(request.id);
+      setIsRequester(false);
+      setActiveRequesterName(request.requester_name);
+      setInstantSport(request.sport);
+      setInstantLocationPref(request.location_pref || '');
+      setInstantPlayersNeeded(request.players_needed);
+      setExistingRequests([]);
+      setInstantMatches([]);
+      setSearchSecondsLeft(secondsUntil(request.expires_at));
+
+      try {
+        await acceptRequest({ requestId: request.id, playerName: firstName });
+      } catch {
+        // ignore — matches poll will reconcile
+      }
+
+      setStep('instantSearching');
+    },
+    [firstName]
+  );
+
+  const handleJoinExisting = (request) => {
+    joinRequest(request);
   };
 
   const handleCancelSearch = useCallback(async () => {
-    if (activeRequestId) {
+    // Only the original requester cancels the underlying request; an accepter
+    // simply leaves their own waiting screen.
+    if (isRequester && activeRequestId) {
       try {
         await updateRequestStatus(activeRequestId, 'cancelled');
       } catch {
@@ -545,7 +629,7 @@ function App() {
     }
     resetInstantFlow();
     setStep('home');
-  }, [activeRequestId, resetInstantFlow]);
+  }, [isRequester, activeRequestId, resetInstantFlow]);
 
   const handleAcceptIncoming = async () => {
     if (!incomingRequest) return;
@@ -554,13 +638,8 @@ function App() {
     setIncomingRequest(null);
     setDismissedRequestIds((prev) => [...prev, request.id]);
 
-    try {
-      await acceptRequest({ requestId: request.id, playerName: firstName });
-    } catch {
-      // ignore — still enter chat optimistically
-    }
-
-    enterGroupChat({ roomId: request.id, requesterName: request.requester_name });
+    // Join and wait — the chat only opens once the group is full.
+    await joinRequest(request);
   };
 
   const handleDeclineIncoming = () => {
@@ -645,13 +724,20 @@ function App() {
         if (!active) return;
 
         setInstantMatches(matches);
+
+        // Only open the chat once ALL required players have joined.
         if (instantPlayersNeeded && matches.length >= instantPlayersNeeded) {
-          try {
-            await updateRequestStatus(activeRequestId, 'matched');
-          } catch {
-            // ignore
+          if (isRequester) {
+            try {
+              await updateRequestStatus(activeRequestId, 'matched');
+            } catch {
+              // ignore
+            }
           }
-          enterGroupChat({ roomId: activeRequestId, requesterName: firstName });
+          enterGroupChat({
+            roomId: activeRequestId,
+            requesterName: activeRequesterName || firstName,
+          });
         }
       } catch {
         // ignore polling errors
@@ -664,7 +750,15 @@ function App() {
       active = false;
       clearInterval(interval);
     };
-  }, [step, activeRequestId, instantPlayersNeeded, firstName, enterGroupChat]);
+  }, [
+    step,
+    activeRequestId,
+    instantPlayersNeeded,
+    isRequester,
+    activeRequesterName,
+    firstName,
+    enterGroupChat,
+  ]);
 
   useEffect(() => {
     if (step !== 'instantSearching') return undefined;
@@ -1140,6 +1234,75 @@ function App() {
             </button>
             {instantError && <p className="login__error">{instantError}</p>}
           </form>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 'instantExisting') {
+    return (
+      <div className="create">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={() => setStep('instantLocation')}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="create__title">Players Found</h1>
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="create__main">
+          <p className="instant__found-intro">
+            Others are already looking for {instantSport}. Join one instead of
+            waiting on your own.
+          </p>
+
+          <div className="existing__list">
+            {existingRequests.map((request) => (
+              <article key={request.id} className="existing__card">
+                <div className="existing__info">
+                  <h2 className="existing__name">{request.requester_name}</h2>
+                  <p className="existing__meta">
+                    {request.sport}
+                    {request.location_pref ? ` · ${request.location_pref}` : ''}
+                  </p>
+                  <p className="existing__needed">
+                    Needs {request.players_needed} player
+                    {request.players_needed === 1 ? '' : 's'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="existing__join"
+                  onClick={() => handleJoinExisting(request)}
+                >
+                  Join instead
+                </button>
+              </article>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="login__button instant__broadcast-new"
+            onClick={proceedBroadcast}
+          >
+            Broadcast a new request
+          </button>
+          {instantError && <p className="login__error">{instantError}</p>}
         </main>
       </div>
     );
