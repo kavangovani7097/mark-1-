@@ -163,7 +163,6 @@ function App() {
   const [createSessionType, setCreateSessionType] = useState('');
   const [sessionDateTime, setSessionDateTime] = useState('');
   const [venue, setVenue] = useState('');
-  const [venueAddress, setVenueAddress] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('');
   const [findSportFilter, setFindSportFilter] = useState('');
   const [findSessionTypeFilter, setFindSessionTypeFilter] = useState('');
@@ -403,7 +402,6 @@ function App() {
       setCreateSessionType('');
       setSessionDateTime('');
       setVenue('');
-      setVenueAddress('');
       setMaxPlayers('');
     }
 
@@ -674,7 +672,7 @@ function App() {
               <VenueAutocomplete
                 value={venue}
                 onVenueChange={setVenue}
-                onAddressChange={setVenueAddress}
+                onAddressChange={() => {}}
               />
             </section>
 
