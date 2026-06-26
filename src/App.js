@@ -1938,6 +1938,12 @@ function App() {
         new Date(session.scheduledAt).getTime() < now
     );
 
+    const expiryCutoff = new Date(Date.now() - 20 * 60 * 1000);
+    const visibleSessions = sessions.filter(
+      (session) =>
+        !session.scheduledAt || new Date(session.scheduledAt) >= expiryCutoff
+    );
+
     return (
       <div className="home">
         <header className="home__header">
@@ -1982,14 +1988,14 @@ function App() {
             className={`home__tab${activeTab === 'live' ? ' home__tab--active' : ''}`}
             onClick={() => setActiveTab('live')}
           >
-            Live Sessions
+            Scheduled Sessions
           </button>
           <button
             type="button"
             className={`home__tab${activeTab === 'find' ? ' home__tab--active' : ''}`}
             onClick={() => setActiveTab('find')}
           >
-            Find Players
+            Instant Sessions
           </button>
         </nav>
 
@@ -2028,12 +2034,12 @@ function App() {
 
               {sessionsLoading ? (
                 <p className="home__loading">Loading sessions...</p>
-              ) : sessions.length === 0 ? (
+              ) : visibleSessions.length === 0 ? (
                 <p className="home__empty">
-                  No sessions near you yet. Be the first to create one!
+                  No upcoming sessions near you. Be the first to create one!
                 </p>
               ) : (
-                sessions.map((session) => {
+                visibleSessions.map((session) => {
                   const isFull = session.slotsLeft <= 0;
                   const hasJoined = joinedSessionIds.includes(session.id);
                   const isJoining = joiningSessionId === session.id;

@@ -145,7 +145,7 @@ async function goToHomeScreen() {
   await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  await screen.findByRole('button', { name: 'Live Sessions' });
+  await screen.findByRole('button', { name: 'Scheduled Sessions' });
   await screen.findByRole('heading', { name: 'Badminton' });
 }
 
@@ -208,8 +208,8 @@ test('shows home screen after completing onboarding', async () => {
   await goToHomeScreen();
 
   expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Live Sessions' })).toHaveClass('home__tab--active');
-  expect(screen.getByRole('button', { name: 'Find Players' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toHaveClass('home__tab--active');
+  expect(screen.getByRole('button', { name: 'Instant Sessions' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Badminton' })).toBeInTheDocument();
   expect(screen.getAllByText('SMALL GROUP')).toHaveLength(2);
   expect(screen.getByText('1-ON-1')).toBeInTheDocument();
@@ -238,7 +238,7 @@ test('shows create session screen from home fab', async () => {
   expect(screen.getByPlaceholderText('Max players')).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
-  expect(screen.getByRole('button', { name: 'Live Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
 });
 
 test('shows profile screen from home profile icon', async () => {
@@ -259,7 +259,7 @@ test('shows profile screen from home profile icon', async () => {
   expect(screen.getByRole('button', { name: 'Edit Profile' })).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
-  expect(screen.getByRole('button', { name: 'Live Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
 });
 
 test('shows selected sports as pills on profile', async () => {
@@ -271,7 +271,7 @@ test('shows selected sports as pills on profile', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
   await userEvent.click(screen.getByRole('button', { name: 'Tennis' }));
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  await screen.findByRole('button', { name: 'Live Sessions' });
+  await screen.findByRole('button', { name: 'Scheduled Sessions' });
   await userEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
   expect(screen.getByText('Tennis')).toBeInTheDocument();
@@ -281,7 +281,7 @@ test('shows find players tab with filters and player cards', async () => {
   render(<App />);
   await goToHomeScreen();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Find Players' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Instant Sessions' }));
 
   expect(screen.getByRole('combobox', { name: 'Filter by sport' })).toBeInTheDocument();
   expect(screen.getByRole('group', { name: 'Filter by session type' })).toBeInTheDocument();
@@ -319,7 +319,7 @@ test('opens session detail when tapping a session card', async () => {
   expect(screen.getByRole('button', { name: 'Join Session' })).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
-  expect(screen.getByRole('button', { name: 'Live Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
 });
 
 test('does not open session detail when tapping join on card', async () => {
@@ -329,5 +329,5 @@ test('does not open session detail when tapping join on card', async () => {
   await userEvent.click(screen.getAllByRole('button', { name: 'Join' })[0]);
 
   expect(screen.queryByRole('button', { name: 'Join Session' })).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Live Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
 });
