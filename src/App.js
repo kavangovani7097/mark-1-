@@ -1228,12 +1228,11 @@ function App() {
             <section className="create__section">
               <p className="instant__step">Step 3 of 3</p>
               <h2 className="instant__question">Where do you want to play?</h2>
-              <input
-                type="text"
-                className="login__input"
-                placeholder="Location preference (e.g. near Satellite)"
+              <VenueAutocomplete
                 value={instantLocationPref}
-                onChange={(e) => setInstantLocationPref(e.target.value)}
+                onVenueChange={(val) => setInstantLocationPref(val)}
+                onAddressChange={() => {}}
+                placeholder="Where do you want to play?"
               />
             </section>
 
