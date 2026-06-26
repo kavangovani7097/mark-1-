@@ -5,10 +5,15 @@ import VenueAutocomplete from './VenueAutocomplete';
 import {
   acceptRequest,
   createInstantRequest,
+  deleteUserData,
   fetchMatches,
   fetchMessages,
+  fetchMyParticipations,
+  fetchMyRatings,
   fetchOpenRequests,
+  joinSession,
   sendMessage,
+  submitRating,
   updateRequestStatus,
 } from './instantPlay';
 import './App.css';
@@ -204,6 +209,11 @@ const getInitials = (name) => {
     .join('');
 };
 
+const capitalize = (name) => {
+  if (!name) return '';
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
 function App() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -255,6 +265,13 @@ function App() {
 
   const [editingProfile, setEditingProfile] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const [toast, setToast] = useState('');
+  const [joinedSessionIds, setJoinedSessionIds] = useState([]);
+  const [joiningSessionId, setJoiningSessionId] = useState(null);
+  const [myParticipationIds, setMyParticipationIds] = useState([]);
+  const [myRatedIds, setMyRatedIds] = useState([]);
 
   const inputRefs = useRef([]);
   const fileInputRef = useRef(null);
@@ -367,6 +384,39 @@ function App() {
       fetchSessions();
     }
   }, [step, fetchSessions]);
+
+  useEffect(() => {
+    if (step !== 'home' || !firstName) return undefined;
+
+    let active = true;
+    const loadHistory = async () => {
+      try {
+        const [participations, ratings] = await Promise.all([
+          fetchMyParticipations(firstName),
+          fetchMyRatings(firstName),
+        ]);
+        if (!active) return;
+
+        setMyParticipationIds(
+          participations.map((row) => row.session_id).filter(Boolean)
+        );
+        setMyRatedIds(ratings.map((row) => row.session_id).filter(Boolean));
+      } catch {
+        // ignore — rating prompts simply won't show
+      }
+    };
+
+    loadHistory();
+    return () => {
+      active = false;
+    };
+  }, [step, firstName]);
+
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(''), 2500);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -564,6 +614,35 @@ function App() {
     setEditingProfile(false);
   };
 
+  const resetAppState = () => {
+    setPhone('');
+    setEmail('');
+    setShowEmailLogin(false);
+    setEmailSent(false);
+    setOtp(EMPTY_OTP);
+    setFirstName('');
+    setAge('');
+    setCity('');
+    setSports(DEFAULT_SPORTS);
+    setSelectedSports([]);
+    setCustomSport('');
+    setProfilePic(null);
+    setEditingProfile(false);
+    setShowDeleteConfirm(false);
+    setActiveTab('live');
+    setSessions([]);
+    setSelectedSessionId(null);
+    setLoginError('');
+    setOtpError('');
+    setIncomingRequest(null);
+    setDismissedRequestIds([]);
+    setJoinedSessionIds([]);
+    setMyParticipationIds([]);
+    setMyRatedIds([]);
+    setToast('');
+    resetInstantFlow();
+  };
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -578,28 +657,83 @@ function App() {
       // ignore
     }
 
-    setPhone('');
-    setEmail('');
-    setShowEmailLogin(false);
-    setEmailSent(false);
-    setOtp(EMPTY_OTP);
-    setFirstName('');
-    setAge('');
-    setCity('');
-    setSports(DEFAULT_SPORTS);
-    setSelectedSports([]);
-    setCustomSport('');
-    setProfilePic(null);
-    setEditingProfile(false);
-    setActiveTab('live');
-    setSessions([]);
-    setSelectedSessionId(null);
-    setLoginError('');
-    setOtpError('');
-    setIncomingRequest(null);
-    setDismissedRequestIds([]);
-    resetInstantFlow();
+    resetAppState();
     setStep('login');
+  };
+
+  const handleDeleteAccount = async () => {
+    const playerName = firstName;
+    setShowDeleteConfirm(false);
+
+    try {
+      await deleteUserData(playerName);
+    } catch {
+      // ignore — still clear local state
+    }
+
+    try {
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+      localStorage.removeItem(PROFILE_PIC_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+
+    resetAppState();
+    setStep('login');
+  };
+
+  const handleJoinSession = async (session) => {
+    if (
+      !session ||
+      session.slotsLeft <= 0 ||
+      joinedSessionIds.includes(session.id) ||
+      joiningSessionId === session.id
+    ) {
+      return;
+    }
+
+    setJoiningSessionId(session.id);
+    try {
+      await joinSession({
+        sessionId: session.id,
+        playerName: firstName,
+        slotsRemaining: session.slotsLeft,
+      });
+
+      setJoinedSessionIds((prev) => [...prev, session.id]);
+      setMyParticipationIds((prev) =>
+        prev.includes(session.id) ? prev : [...prev, session.id]
+      );
+      setSessions((prev) =>
+        prev.map((item) =>
+          item.id === session.id
+            ? { ...item, slotsLeft: Math.max(0, item.slotsLeft - 1) }
+            : item
+        )
+      );
+      setToast("You've joined!");
+    } catch {
+      setToast('Could not join. Please try again.');
+    } finally {
+      setJoiningSessionId(null);
+    }
+  };
+
+  const handleRateSession = async (sessionId, rating) => {
+    setMyRatedIds((prev) =>
+      prev.includes(sessionId) ? prev : [...prev, sessionId]
+    );
+    try {
+      await submitRating({ sessionId, raterName: firstName, rating });
+    } catch {
+      // ignore — optimistically dismissed
+    }
   };
 
   const handleOpenSession = (sessionId) => {
@@ -1237,7 +1371,7 @@ function App() {
           ) : (
             <>
               <div className="profile__identity">
-                <h1 className="profile__name">{firstName}</h1>
+                <h1 className="profile__name">{capitalize(firstName)}</h1>
                 <p className="profile__meta">
                   {age && <span className="profile__age">{age}</span>}
                   <span className="profile__city">{city}</span>
@@ -1281,9 +1415,44 @@ function App() {
               >
                 Edit Profile
               </button>
+
+              <button
+                type="button"
+                className="profile__delete"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Delete Account
+              </button>
             </>
           )}
         </main>
+
+        {showDeleteConfirm && (
+          <div className="confirm" role="dialog" aria-modal="true">
+            <div className="confirm__card">
+              <h2 className="confirm__title">Delete account?</h2>
+              <p className="confirm__text">
+                Are you sure? This will delete all your data permanently.
+              </p>
+              <div className="confirm__actions">
+                <button
+                  type="button"
+                  className="confirm__cancel"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="confirm__delete"
+                  onClick={handleDeleteAccount}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1664,7 +1833,7 @@ function App() {
             <div className="instant-search__players">
               {instantMatches.map((entry) => (
                 <span key={entry.id} className="instant-search__player">
-                  {entry.player_name}
+                  {capitalize(entry.player_name)}
                 </span>
               ))}
             </div>
@@ -1708,7 +1877,7 @@ function App() {
             <div className="chat__players">
               {chatPlayers.map((name) => (
                 <span key={name} className="chat__player-pill">
-                  {name}
+                  {capitalize(name)}
                 </span>
               ))}
             </div>
@@ -1728,7 +1897,7 @@ function App() {
                 >
                   {!isMine && (
                     <span className="chat__message-author">
-                      {message.sender_name}
+                      {capitalize(message.sender_name)}
                     </span>
                   )}
                   <p className="chat__message-text">{message.text}</p>
@@ -1760,6 +1929,15 @@ function App() {
   }
 
   if (step === 'home') {
+    const now = Date.now();
+    const sessionsToRate = sessions.filter(
+      (session) =>
+        myParticipationIds.includes(session.id) &&
+        !myRatedIds.includes(session.id) &&
+        session.scheduledAt &&
+        new Date(session.scheduledAt).getTime() < now
+    );
+
     return (
       <div className="home">
         <header className="home__header">
@@ -1818,6 +1996,36 @@ function App() {
         <main className="home__main">
           {activeTab === 'live' ? (
             <div className="home__sessions">
+              {sessionsToRate.map((session) => (
+                <article key={`rate-${session.id}`} className="rate-card">
+                  <div className="rate-card__info">
+                    <span className="rate-card__title">Rate your crew</span>
+                    <span className="rate-card__sub">
+                      {session.sport} · {session.location}
+                    </span>
+                    <span className="rate-card__question">Would play again?</span>
+                  </div>
+                  <div className="rate-card__actions">
+                    <button
+                      type="button"
+                      className="rate-card__btn"
+                      aria-label="Would play again"
+                      onClick={() => handleRateSession(session.id, true)}
+                    >
+                      👍
+                    </button>
+                    <button
+                      type="button"
+                      className="rate-card__btn"
+                      aria-label="Would not play again"
+                      onClick={() => handleRateSession(session.id, false)}
+                    >
+                      👎
+                    </button>
+                  </div>
+                </article>
+              ))}
+
               {sessionsLoading ? (
                 <p className="home__loading">Loading sessions...</p>
               ) : sessions.length === 0 ? (
@@ -1825,34 +2033,53 @@ function App() {
                   No sessions near you yet. Be the first to create one!
                 </p>
               ) : (
-                sessions.map((session) => (
-                  <article
-                    key={session.id}
-                    className="home__session-card home__session-card--clickable"
-                    onClick={() => handleOpenSession(session.id)}
-                  >
-                    <div className="home__session-top">
-                      <div className="home__session-heading">
-                        <span className="home__session-type">
-                          {session.sessionType.toUpperCase()}
-                        </span>
-                        <h2 className="home__session-sport">{session.sport}</h2>
+                sessions.map((session) => {
+                  const isFull = session.slotsLeft <= 0;
+                  const hasJoined = joinedSessionIds.includes(session.id);
+                  const isJoining = joiningSessionId === session.id;
+                  return (
+                    <article
+                      key={session.id}
+                      className="home__session-card home__session-card--clickable"
+                      onClick={() => handleOpenSession(session.id)}
+                    >
+                      <div className="home__session-top">
+                        <div className="home__session-heading">
+                          <span className="home__session-type">
+                            {session.sessionType.toUpperCase()}
+                          </span>
+                          <h2 className="home__session-sport">
+                            {session.sport}
+                          </h2>
+                        </div>
+                        <button
+                          type="button"
+                          className="home__session-join"
+                          disabled={isFull || hasJoined || isJoining}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleJoinSession(session);
+                          }}
+                        >
+                          {isFull
+                            ? 'Full'
+                            : hasJoined
+                            ? 'Joined'
+                            : isJoining
+                            ? 'Joining...'
+                            : 'Join'}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="home__session-join"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Join
-                      </button>
-                    </div>
-                    <p className="home__session-detail">{session.time}</p>
-                    <p className="home__session-detail">{session.location}</p>
-                    <p className="home__session-detail">
-                      {session.slotsLeft} slots left
-                    </p>
-                  </article>
-                ))
+                      <p className="home__session-detail">{session.time}</p>
+                      <p className="home__session-detail">
+                        {session.location}
+                      </p>
+                      <p className="home__session-detail">
+                        {session.slotsLeft} slots left
+                      </p>
+                    </article>
+                  );
+                })
               )}
             </div>
           ) : (
@@ -1962,7 +2189,7 @@ function App() {
             <div className="incoming__card">
               <span className="incoming__badge">Wants to play now</span>
               <h2 className="incoming__name">
-                {incomingRequest.requester_name}
+                {capitalize(incomingRequest.requester_name)}
               </h2>
               <p className="incoming__sport">{incomingRequest.sport}</p>
               {incomingRequest.location_pref && (
@@ -1994,6 +2221,8 @@ function App() {
             </div>
           </div>
         )}
+
+        {toast && <div className="toast">{toast}</div>}
       </div>
     );
   }

@@ -104,7 +104,9 @@ beforeEach(() => {
     if (
       String(url).includes('/rest/v1/instant_requests') ||
       String(url).includes('/rest/v1/instant_matches') ||
-      String(url).includes('/rest/v1/messages')
+      String(url).includes('/rest/v1/messages') ||
+      String(url).includes('/rest/v1/session_participants') ||
+      String(url).includes('/rest/v1/ratings')
     ) {
       return Promise.resolve({
         ok: true,

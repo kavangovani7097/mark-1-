@@ -115,3 +115,81 @@ export async function sendMessage({ roomId, senderName, text }) {
     }),
   });
 }
+
+export async function joinSession({ sessionId, playerName, slotsRemaining }) {
+  await fetch(restUrl('session_participants'), {
+    method: 'POST',
+    headers: restHeaders(),
+    body: JSON.stringify({
+      session_id: sessionId,
+      player_name: playerName,
+    }),
+  });
+
+  const newSlots = Math.max(0, (slotsRemaining ?? 1) - 1);
+  await fetch(`${restUrl('sessions')}?id=eq.${sessionId}`, {
+    method: 'PATCH',
+    headers: restHeaders(),
+    body: JSON.stringify({ slots_remaining: newSlots }),
+  });
+
+  return newSlots;
+}
+
+export async function fetchMyParticipations(playerName) {
+  const params = new URLSearchParams({
+    select: 'session_id',
+    player_name: `eq.${playerName}`,
+  });
+
+  const response = await fetch(
+    `${restUrl('session_participants')}?${params}`,
+    { headers: restHeaders() }
+  );
+
+  return asArray(await response.json());
+}
+
+export async function fetchMyRatings(raterName) {
+  const params = new URLSearchParams({
+    select: 'session_id',
+    rater_name: `eq.${raterName}`,
+  });
+
+  const response = await fetch(`${restUrl('ratings')}?${params}`, {
+    headers: restHeaders(),
+  });
+
+  return asArray(await response.json());
+}
+
+export async function submitRating({ sessionId, raterName, rating }) {
+  await fetch(restUrl('ratings'), {
+    method: 'POST',
+    headers: restHeaders(),
+    body: JSON.stringify({
+      session_id: sessionId,
+      rater_name: raterName,
+      rating,
+    }),
+  });
+}
+
+export async function deleteUserData(playerName) {
+  const value = encodeURIComponent(`eq.${playerName}`);
+  const targets = [
+    `session_participants?player_name=${value}`,
+    `instant_matches?player_name=${value}`,
+    `messages?sender_name=${value}`,
+    `ratings?rater_name=${value}`,
+  ];
+
+  await Promise.all(
+    targets.map((path) =>
+      fetch(restUrl(path), {
+        method: 'DELETE',
+        headers: restHeaders(),
+      }).catch(() => {})
+    )
+  );
+}
