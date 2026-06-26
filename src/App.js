@@ -170,6 +170,7 @@ const isRequestJoinable = (request, { sport, excludeName }) => {
 };
 
 const PROFILE_STORAGE_KEY = 'mark1_profile';
+const PROFILE_PIC_STORAGE_KEY = 'mark1_profile_pic';
 
 const loadStoredProfile = () => {
   try {
@@ -183,6 +184,24 @@ const loadStoredProfile = () => {
 
 const saveStoredProfile = (profile) => {
   localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+};
+
+const loadStoredProfilePic = () => {
+  try {
+    return localStorage.getItem(PROFILE_PIC_STORAGE_KEY) || null;
+  } catch {
+    return null;
+  }
+};
+
+const getInitials = (name) => {
+  if (!name || !name.trim()) return '?';
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
 };
 
 function App() {
@@ -234,10 +253,17 @@ function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
 
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profilePic, setProfilePic] = useState(null);
+
   const inputRefs = useRef([]);
+  const fileInputRef = useRef(null);
   const closedRequestRef = useRef(false);
 
   useEffect(() => {
+    const storedPic = loadStoredProfilePic();
+    if (storedPic) setProfilePic(storedPic);
+
     const stored = loadStoredProfile();
     if (!stored) return;
 
@@ -495,11 +521,85 @@ function App() {
   };
 
   const handleOpenProfile = () => {
+    setEditingProfile(false);
     setStep('profile');
   };
 
   const handleBackToHome = () => {
+    setEditingProfile(false);
     setStep('home');
+  };
+
+  const handleEditProfile = () => {
+    setEditingProfile(true);
+  };
+
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = typeof reader.result === 'string' ? reader.result : '';
+      if (!base64) return;
+      setProfilePic(base64);
+      try {
+        localStorage.setItem(PROFILE_PIC_STORAGE_KEY, base64);
+      } catch {
+        // ignore storage quota errors
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = (e) => {
+    if (e) e.preventDefault();
+
+    saveStoredProfile({
+      first_name: firstName,
+      age: age === '' ? null : parseInt(age, 10),
+      city,
+      sports: selectedSports,
+    });
+    setEditingProfile(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — still clear local state
+    }
+
+    try {
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+      localStorage.removeItem(PROFILE_PIC_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    setPhone('');
+    setEmail('');
+    setShowEmailLogin(false);
+    setEmailSent(false);
+    setOtp(EMPTY_OTP);
+    setFirstName('');
+    setAge('');
+    setCity('');
+    setSports(DEFAULT_SPORTS);
+    setSelectedSports([]);
+    setCustomSport('');
+    setProfilePic(null);
+    setEditingProfile(false);
+    setActiveTab('live');
+    setSessions([]);
+    setSelectedSessionId(null);
+    setLoginError('');
+    setOtpError('');
+    setIncomingRequest(null);
+    setDismissedRequestIds([]);
+    resetInstantFlow();
+    setStep('login');
   };
 
   const handleOpenSession = (sessionId) => {
@@ -1009,6 +1109,10 @@ function App() {
   }
 
   if (step === 'profile') {
+    const sessionsPlayedCount = sessions.filter(
+      (session) => session.city && city && session.city === city
+    ).length;
+
     return (
       <div className="profile">
         <header className="profile__header">
@@ -1029,45 +1133,156 @@ function App() {
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
+          <button
+            type="button"
+            className="profile__logout"
+            onClick={handleLogout}
+          >
+            Log out
+          </button>
         </header>
 
         <main className="profile__main">
-          <div className="profile__identity">
-            <h1 className="profile__name">{firstName}</h1>
-            <p className="profile__city">{city}</p>
-          </div>
-
-          <div className="profile__stats">
-            <div className="profile__stat">
-              <span className="profile__stat-value">0</span>
-              <span className="profile__stat-label">Sessions Played</span>
-            </div>
-            <div className="profile__stat">
-              <span className="profile__stat-value">0</span>
-              <span className="profile__stat-label">Sessions Hosted</span>
-            </div>
-          </div>
-
-          {selectedSports.length > 0 && (
-            <div className="profile__sports">
-              {selectedSports.map((sport) => (
-                <span key={sport} className="profile__sport-pill">
-                  {sport}
+          <div className="profile__avatar-wrap">
+            <div className="profile__avatar">
+              {profilePic ? (
+                <img
+                  src={profilePic}
+                  alt={firstName || 'Profile'}
+                  className="profile__avatar-img"
+                />
+              ) : (
+                <span className="profile__avatar-initials">
+                  {getInitials(firstName)}
                 </span>
-              ))}
+              )}
             </div>
+            {editingProfile && (
+              <>
+                <button
+                  type="button"
+                  className="profile__avatar-upload"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {profilePic ? 'Change Photo' : 'Upload Photo'}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="profile__file-input"
+                  onChange={handleProfilePicChange}
+                />
+              </>
+            )}
+          </div>
+
+          {editingProfile ? (
+            <form className="login__form profile__edit-form" onSubmit={handleSaveProfile}>
+              <input
+                type="text"
+                className="login__input"
+                placeholder="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                autoComplete="given-name"
+              />
+              <input
+                type="number"
+                className="login__input"
+                placeholder="Age"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                min="1"
+                inputMode="numeric"
+              />
+              <select
+                className={`login__select${city ? '' : ' login__select--placeholder'}`}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                aria-label="City"
+              >
+                <option value="" disabled>
+                  City
+                </option>
+                {CITIES.map((cityName) => (
+                  <option key={cityName} value={cityName}>
+                    {cityName}
+                  </option>
+                ))}
+              </select>
+
+              <div className="login__sports-grid profile__edit-sports">
+                {sports.map((name) => {
+                  const isSelected = selectedSports.includes(name);
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      className={`login__sport-card${isSelected ? ' login__sport-card--selected' : ''}`}
+                      onClick={() => toggleSport(name)}
+                      aria-pressed={isSelected}
+                      aria-label={name}
+                    >
+                      <span className="login__sport-name">{name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button type="submit" className="login__button">
+                Save
+              </button>
+            </form>
+          ) : (
+            <>
+              <div className="profile__identity">
+                <h1 className="profile__name">{firstName}</h1>
+                <p className="profile__meta">
+                  {age && <span className="profile__age">{age}</span>}
+                  <span className="profile__city">{city}</span>
+                </p>
+              </div>
+
+              <div className="profile__stats">
+                <div className="profile__stat">
+                  <span className="profile__stat-value">
+                    {sessionsPlayedCount}
+                  </span>
+                  <span className="profile__stat-label">Sessions Played</span>
+                </div>
+                <div className="profile__stat">
+                  <span className="profile__stat-value">0</span>
+                  <span className="profile__stat-label">Rating</span>
+                </div>
+              </div>
+
+              {selectedSports.length > 0 && (
+                <div className="profile__sports">
+                  {selectedSports.map((sport) => (
+                    <span key={sport} className="profile__sport-pill">
+                      {sport}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <section className="profile__section">
+                <h2 className="profile__section-title">My Crew</h2>
+                <p className="profile__empty">
+                  Play with someone to add them to your crew
+                </p>
+              </section>
+
+              <button
+                type="button"
+                className="login__button profile__edit"
+                onClick={handleEditProfile}
+              >
+                Edit Profile
+              </button>
+            </>
           )}
-
-          <section className="profile__section">
-            <h2 className="profile__section-title">My Crew</h2>
-            <p className="profile__empty">
-              Play with someone to add them to your crew
-            </p>
-          </section>
-
-          <button type="button" className="login__button profile__edit">
-            Edit Profile
-          </button>
         </main>
       </div>
     );

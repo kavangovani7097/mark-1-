@@ -248,7 +248,7 @@ test('shows profile screen from home profile icon', async () => {
   expect(screen.getByRole('heading', { name: 'Alex' })).toBeInTheDocument();
   expect(screen.getByText('Mumbai')).toBeInTheDocument();
   expect(screen.getByText('Sessions Played')).toBeInTheDocument();
-  expect(screen.getByText('Sessions Hosted')).toBeInTheDocument();
+  expect(screen.getByText('Rating')).toBeInTheDocument();
   expect(screen.queryByText('Would Play Again %')).not.toBeInTheDocument();
   expect(screen.getByText('My Crew')).toBeInTheDocument();
   expect(

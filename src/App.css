@@ -888,17 +888,98 @@ gmp-place-autocomplete {
 }
 
 .profile__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--squadr-border);
+}
+
+.profile__logout {
+  padding: 0.4rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--squadr-text-secondary);
+  background: none;
+  border: 1px solid var(--squadr-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.profile__logout:hover {
+  color: var(--squadr-text);
+  border-color: var(--squadr-border-focus);
 }
 
 .profile__main {
   padding: 1.5rem;
 }
 
+.profile__avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  background-color: var(--squadr-accent);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile__avatar-initials {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.profile__avatar-upload {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--squadr-text);
+  background: none;
+  border: 1px solid var(--squadr-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.profile__avatar-upload:hover {
+  border-color: var(--squadr-border-focus);
+}
+
+.profile__file-input {
+  display: none;
+}
+
+.profile__edit-form {
+  margin-top: 0.5rem;
+}
+
+.profile__edit-sports {
+  margin-bottom: 0.5rem;
+}
+
 .profile__identity {
   margin-bottom: 1.75rem;
-  text-align: left;
+  text-align: center;
 }
 
 .profile__name {
@@ -906,6 +987,22 @@ gmp-place-autocomplete {
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+.profile__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: var(--squadr-text-secondary);
+}
+
+.profile__age::after {
+  content: '·';
+  margin-left: 0.5rem;
 }
 
 .profile__city {
