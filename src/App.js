@@ -231,6 +231,7 @@ function App() {
   const [chatInput, setChatInput] = useState('');
 
   const inputRefs = useRef([]);
+  const closedRequestRef = useRef(false);
 
   useEffect(() => {
     const stored = loadStoredProfile();
@@ -507,6 +508,7 @@ function App() {
     setInstantMatches([]);
     setSearchSecondsLeft(INSTANT_SEARCH_SECONDS);
     setInstantError('');
+    closedRequestRef.current = false;
   }, []);
 
   const enterGroupChat = useCallback(({ roomId, requesterName }) => {
@@ -549,6 +551,7 @@ function App() {
         return;
       }
 
+      closedRequestRef.current = false;
       setActiveRequestId(request.id);
       setIsRequester(true);
       setActiveRequesterName(firstName);
@@ -605,12 +608,16 @@ function App() {
       try {
         await acceptRequest({ requestId: request.id, playerName: firstName });
       } catch {
-        // ignore — matches poll will reconcile
+        // ignore — chat poll will reconcile the roster
       }
 
-      setStep('instantSearching');
+      // Acceptors join the (already open) chat room immediately.
+      enterGroupChat({
+        roomId: request.id,
+        requesterName: request.requester_name,
+      });
     },
-    [firstName]
+    [firstName, enterGroupChat]
   );
 
   const handleJoinExisting = (request) => {
@@ -725,15 +732,9 @@ function App() {
 
         setInstantMatches(matches);
 
-        // Only open the chat once ALL required players have joined.
-        if (instantPlayersNeeded && matches.length >= instantPlayersNeeded) {
-          if (isRequester) {
-            try {
-              await updateRequestStatus(activeRequestId, 'matched');
-            } catch {
-              // ignore
-            }
-          }
+        // Open the chat as soon as the FIRST player accepts. The request
+        // stays open ('searching') so later players can still join the room.
+        if (matches.length >= 1) {
           enterGroupChat({
             roomId: activeRequestId,
             requesterName: activeRequesterName || firstName,
@@ -750,15 +751,7 @@ function App() {
       active = false;
       clearInterval(interval);
     };
-  }, [
-    step,
-    activeRequestId,
-    instantPlayersNeeded,
-    isRequester,
-    activeRequesterName,
-    firstName,
-    enterGroupChat,
-  ]);
+  }, [step, activeRequestId, activeRequesterName, firstName, enterGroupChat]);
 
   useEffect(() => {
     if (step !== 'instantSearching') return undefined;
@@ -788,6 +781,7 @@ function App() {
         if (!active) return;
 
         setChatMessages(msgs);
+        setInstantMatches(matches);
         setChatPlayers((prev) => {
           const names = [
             chatRequesterName,
@@ -796,6 +790,22 @@ function App() {
           const unique = [...new Set(names)];
           return unique.length ? unique : prev;
         });
+
+        // The requester closes the request once the group is full so no extra
+        // players can join beyond the requested size.
+        if (
+          isRequester &&
+          instantPlayersNeeded &&
+          matches.length >= instantPlayersNeeded &&
+          !closedRequestRef.current
+        ) {
+          closedRequestRef.current = true;
+          try {
+            await updateRequestStatus(chatRoomId, 'matched');
+          } catch {
+            // ignore — capacity is best-effort
+          }
+        }
       } catch {
         // ignore polling errors
       }
@@ -807,7 +817,7 @@ function App() {
       active = false;
       clearInterval(interval);
     };
-  }, [step, chatRoomId, chatRequesterName]);
+  }, [step, chatRoomId, chatRequesterName, isRequester, instantPlayersNeeded]);
 
   const instantSportOptions =
     selectedSports.length > 0 ? selectedSports : DEFAULT_SPORTS;
