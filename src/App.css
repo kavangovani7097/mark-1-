@@ -204,6 +204,76 @@
   line-height: 1.4;
 }
 
+.login__error--auth {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.login__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 1.25rem 0;
+}
+
+.login__divider::before,
+.login__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--squadr-border);
+}
+
+.login__divider span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--squadr-text-muted);
+}
+
+.login__alts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.login__button--secondary {
+  color: var(--squadr-text);
+  background-color: transparent;
+  border: 1px solid var(--squadr-border);
+}
+
+.login__button--secondary:hover {
+  background-color: var(--squadr-surface);
+  border-color: var(--squadr-border-focus);
+  opacity: 1;
+}
+
+.login__button--google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+}
+
+.login__google-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.login__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--squadr-text-secondary);
+  text-align: center;
+  line-height: 1.4;
+}
+
 .login__otp-message {
   margin: 0 0 2.5rem;
   font-size: 0.9375rem;

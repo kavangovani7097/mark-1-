@@ -8,6 +8,9 @@ jest.mock('./supabase', () => ({
     auth: {
       signInWithOtp: jest.fn(),
       verifyOtp: jest.fn(),
+      signInWithOAuth: jest.fn(),
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(),
     },
     from: jest.fn(),
   },
@@ -56,6 +59,9 @@ jest.mock('./supabase', () => ({
     auth: {
       signInWithOtp: jest.fn(),
       verifyOtp: jest.fn(),
+      signInWithOAuth: jest.fn(),
+      getSession: jest.fn(),
+      onAuthStateChange: jest.fn(),
     },
     from: jest.fn(),
   },
@@ -64,6 +70,11 @@ jest.mock('./supabase', () => ({
 
 beforeEach(() => {
   localStorage.clear();
+  supabase.auth.signInWithOAuth.mockResolvedValue({ error: null });
+  supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+  supabase.auth.onAuthStateChange.mockReturnValue({
+    data: { subscription: { unsubscribe: jest.fn() } },
+  });
   window.google = {
     maps: {
       places: {

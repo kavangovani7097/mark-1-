@@ -187,6 +187,9 @@ const saveStoredProfile = (profile) => {
 
 function App() {
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [step, setStep] = useState('login');
   const [otp, setOtp] = useState(EMPTY_OTP);
   const [firstName, setFirstName] = useState('');
@@ -244,6 +247,62 @@ function App() {
     if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
   }, []);
 
+  const routeAfterAuth = useCallback(() => {
+    const stored = loadStoredProfile();
+    if (stored?.first_name) {
+      setFirstName(stored.first_name);
+      if (stored.age != null) setAge(String(stored.age));
+      if (stored.city) setCity(stored.city);
+      if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
+      setStep('home');
+    } else {
+      setStep('onboarding');
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const restoreSession = async () => {
+      try {
+        const { data } = (await supabase.auth.getSession()) ?? {};
+        if (!active) return;
+
+        if (data?.session) {
+          routeAfterAuth();
+        } else {
+          setStep('login');
+        }
+      } catch {
+        if (active) setStep('login');
+      }
+    };
+
+    restoreSession();
+    return () => {
+      active = false;
+    };
+  }, [routeAfterAuth]);
+
+  useEffect(() => {
+    const { data } =
+      supabase.auth.onAuthStateChange((event, session) => {
+        // Phone OTP is handled by its own verify flow; route here for the
+        // Google OAuth redirect callback and email magic-link sign-ins.
+        if (
+          event === 'SIGNED_IN' &&
+          session &&
+          session.user?.app_metadata?.provider !== 'phone'
+        ) {
+          routeAfterAuth();
+        }
+      }) ?? {};
+
+    return () => {
+      data?.subscription?.unsubscribe?.();
+    };
+  }, [routeAfterAuth]);
+
   const fetchSessions = useCallback(async () => {
     setSessionsLoading(true);
     try {
@@ -297,6 +356,38 @@ function App() {
     }
 
     setStep('otp');
+  };
+
+  const handleContinueWithEmail = () => {
+    setLoginError('');
+    setEmailSent(false);
+    setShowEmailLogin(true);
+  };
+
+  const handleSendMagicLink = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setLoginError('');
+    setEmailSent(false);
+    const { error } =
+      (await supabase.auth.signInWithOtp({ email: email.trim() })) ?? {};
+
+    if (error) {
+      setLoginError(error.message);
+    } else {
+      setEmailSent(true);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoginError('');
+    const { error } =
+      (await supabase.auth.signInWithOAuth({ provider: 'google' })) ?? {};
+
+    if (error) {
+      setLoginError(error.message);
+    }
   };
 
   const handleOtpChange = (index, value) => {
@@ -1853,8 +1944,74 @@ function App() {
           <button type="submit" className="login__button">
             Send OTP
           </button>
-          {loginError && <p className="login__error">{loginError}</p>}
         </form>
+
+        <div className="login__divider" aria-hidden="true">
+          <span>or</span>
+        </div>
+
+        <div className="login__alts">
+          {showEmailLogin ? (
+            <form className="login__form" onSubmit={handleSendMagicLink}>
+              <input
+                type="email"
+                className="login__input"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+              <button type="submit" className="login__button">
+                Send Magic Link
+              </button>
+              {emailSent && (
+                <p className="login__hint">
+                  Check your email for the magic link.
+                </p>
+              )}
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="login__button login__button--secondary"
+              onClick={handleContinueWithEmail}
+            >
+              Continue with Email
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="login__button login__button--secondary login__button--google"
+            onClick={handleGoogleLogin}
+          >
+            <svg
+              className="login__google-icon"
+              viewBox="0 0 18 18"
+              aria-hidden="true"
+            >
+              <path
+                fill="#4285F4"
+                d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+              />
+              <path
+                fill="#34A853"
+                d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.997 8.997 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
+              />
+              <path
+                fill="#EA4335"
+                d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+        </div>
+
+        {loginError && <p className="login__error login__error--auth">{loginError}</p>}
       </div>
     </div>
   );
