@@ -42,6 +42,7 @@ export async function fetchOpenRequests() {
   const params = new URLSearchParams({
     select: '*',
     status: 'eq.searching',
+    expires_at: `gt.${new Date().toISOString()}`,
     order: 'created_at.desc',
   });
 
@@ -85,12 +86,16 @@ export async function fetchMatches(requestId) {
   return asArray(await response.json());
 }
 
-export async function fetchMessages(roomId) {
+export async function fetchMessages(roomId, since) {
   const params = new URLSearchParams({
     select: '*',
     room_id: `eq.${roomId}`,
     order: 'created_at.asc',
   });
+
+  if (since) {
+    params.set('created_at', `gte.${since}`);
+  }
 
   const response = await fetch(`${restUrl('messages')}?${params}`, {
     headers: restHeaders(),

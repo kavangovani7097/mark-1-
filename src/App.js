@@ -225,6 +225,7 @@ function App() {
   const [incomingRequest, setIncomingRequest] = useState(null);
   const [dismissedRequestIds, setDismissedRequestIds] = useState([]);
   const [chatRoomId, setChatRoomId] = useState(null);
+  const [chatJoinedAt, setChatJoinedAt] = useState(null);
   const [chatRequesterName, setChatRequesterName] = useState('');
   const [chatPlayers, setChatPlayers] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
@@ -513,6 +514,7 @@ function App() {
 
   const enterGroupChat = useCallback(({ roomId, requesterName }) => {
     setChatRoomId(roomId);
+    setChatJoinedAt(new Date().toISOString());
     setChatRequesterName(requesterName);
     setChatPlayers(requesterName ? [requesterName] : []);
     setChatMessages([]);
@@ -664,7 +666,7 @@ function App() {
     setChatInput('');
     try {
       await sendMessage({ roomId: chatRoomId, senderName: firstName, text });
-      const msgs = await fetchMessages(chatRoomId);
+      const msgs = await fetchMessages(chatRoomId, chatJoinedAt);
       setChatMessages(msgs);
     } catch {
       // ignore — next poll will reconcile
@@ -673,6 +675,7 @@ function App() {
 
   const handleLeaveChat = () => {
     setChatRoomId(null);
+    setChatJoinedAt(null);
     setChatRequesterName('');
     setChatPlayers([]);
     setChatMessages([]);
@@ -775,7 +778,7 @@ function App() {
     const poll = async () => {
       try {
         const [msgs, matches] = await Promise.all([
-          fetchMessages(chatRoomId),
+          fetchMessages(chatRoomId, chatJoinedAt),
           fetchMatches(chatRoomId),
         ]);
         if (!active) return;
@@ -817,7 +820,14 @@ function App() {
       active = false;
       clearInterval(interval);
     };
-  }, [step, chatRoomId, chatRequesterName, isRequester, instantPlayersNeeded]);
+  }, [
+    step,
+    chatRoomId,
+    chatJoinedAt,
+    chatRequesterName,
+    isRequester,
+    instantPlayersNeeded,
+  ]);
 
   const instantSportOptions =
     selectedSports.length > 0 ? selectedSports : DEFAULT_SPORTS;
