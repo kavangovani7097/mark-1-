@@ -225,6 +225,117 @@ const capitalize = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
+const AVAILABILITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const AVAILABILITY_WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+const AVAILABILITY_WEEKENDS = ['Sat', 'Sun'];
+const TIME_SLOTS = [
+  { id: 'Morning', label: 'Morning', sub: '6–10am' },
+  { id: 'Afternoon', label: 'Afternoon', sub: '12–4pm' },
+  { id: 'Evening', label: 'Evening', sub: '5–10pm' },
+];
+const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+
+const PROFILE_BADGES = [
+  {
+    id: 'early-adopter',
+    emoji: '🌟',
+    name: 'Early Adopter',
+    hint: 'Joined before launch',
+    isEarned: () => true,
+  },
+  {
+    id: 'first-session',
+    emoji: '🏅',
+    name: 'First Session',
+    hint: 'Play your first session',
+    isEarned: ({ sessionsPlayed }) => sessionsPlayed >= 1,
+  },
+  {
+    id: 'on-fire',
+    emoji: '🔥',
+    name: 'On Fire',
+    hint: 'Play 5 sessions',
+    isEarned: ({ sessionsPlayed }) => sessionsPlayed >= 5,
+  },
+  {
+    id: 'squad-legend',
+    emoji: '💎',
+    name: 'Squad Legend',
+    hint: 'Play 20 sessions',
+    isEarned: ({ sessionsPlayed }) => sessionsPlayed >= 20,
+  },
+  {
+    id: 'five-star',
+    emoji: '⭐',
+    name: '5-Star Player',
+    hint: 'Reach a 4.5 rating',
+    isEarned: ({ rating }) => rating >= 4.5,
+  },
+  {
+    id: 'social-butterfly',
+    emoji: '🤝',
+    name: 'Social Butterfly',
+    hint: 'Add 5 friends',
+    isEarned: ({ friendsCount }) => friendsCount >= 5,
+  },
+];
+
+const formatAvailabilitySummary = (availability) => {
+  if (!availability || typeof availability !== 'object') return null;
+
+  const hasAny = AVAILABILITY_DAYS.some((day) => availability[day]?.length > 0);
+  if (!hasAny) return null;
+
+  const collectSlots = (days) => {
+    const set = new Set();
+    days.forEach((day) => {
+      (availability[day] || []).forEach((slot) => set.add(slot));
+    });
+    return TIME_SLOTS.filter((slot) => set.has(slot.id)).map((slot) => slot.id);
+  };
+
+  const parts = [];
+  const weekdaySlots = collectSlots(AVAILABILITY_WEEKDAYS);
+  const weekendDaysActive = AVAILABILITY_WEEKENDS.filter(
+    (day) => availability[day]?.length > 0
+  );
+
+  if (weekdaySlots.length > 0) {
+    const slotText = weekdaySlots.map((slot) => `${slot}s`).join(' & ');
+    parts.push(`Weekday ${slotText}`);
+  }
+
+  if (weekendDaysActive.length > 0) {
+    parts.push('Weekends');
+  }
+
+  return parts.join(' · ');
+};
+
+const normalizeAvailability = (value) => {
+  if (!value || typeof value !== 'object') return {};
+  const normalized = {};
+  AVAILABILITY_DAYS.forEach((day) => {
+    if (Array.isArray(value[day]) && value[day].length > 0) {
+      normalized[day] = value[day].filter((slot) =>
+        TIME_SLOTS.some((item) => item.id === slot)
+      );
+    }
+  });
+  return normalized;
+};
+
+const normalizeSkillLevels = (value) => {
+  if (!value || typeof value !== 'object') return {};
+  const normalized = {};
+  Object.entries(value).forEach(([sport, level]) => {
+    if (SKILL_LEVELS.includes(level)) {
+      normalized[sport] = level;
+    }
+  });
+  return normalized;
+};
+
 function App() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -298,6 +409,9 @@ function App() {
   const [isPro, setIsPro] = useState(false);
   const [proPlan, setProPlan] = useState('yearly');
 
+  const [availability, setAvailability] = useState({});
+  const [skillLevels, setSkillLevels] = useState({});
+
   const inputRefs = useRef([]);
   const fileInputRef = useRef(null);
   const closedRequestRef = useRef(false);
@@ -315,6 +429,8 @@ function App() {
     if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
     if (stored.squadr_id) setSquadrId(stored.squadr_id);
     if (stored.isPro) setIsPro(true);
+    if (stored.availability) setAvailability(normalizeAvailability(stored.availability));
+    if (stored.skillLevels) setSkillLevels(normalizeSkillLevels(stored.skillLevels));
   }, []);
 
   const routeAfterAuth = useCallback(() => {
@@ -326,6 +442,12 @@ function App() {
       if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
       if (stored.squadr_id) setSquadrId(stored.squadr_id);
       if (stored.isPro) setIsPro(true);
+      if (stored.availability) {
+        setAvailability(normalizeAvailability(stored.availability));
+      }
+      if (stored.skillLevels) {
+        setSkillLevels(normalizeSkillLevels(stored.skillLevels));
+      }
       setStep('home');
     } else {
       setStep('onboarding');
@@ -569,11 +691,43 @@ function App() {
   };
 
   const toggleSport = (name) => {
-    setSelectedSports((prev) =>
-      prev.includes(name)
-        ? prev.filter((sport) => sport !== name)
-        : [...prev, name]
-    );
+    setSelectedSports((prev) => {
+      if (prev.includes(name)) {
+        setSkillLevels((levels) => {
+          const next = { ...levels };
+          delete next[name];
+          return next;
+        });
+        return prev.filter((sport) => sport !== name);
+      }
+
+      setSkillLevels((levels) => ({
+        ...levels,
+        [name]: levels[name] || 'Beginner',
+      }));
+      return [...prev, name];
+    });
+  };
+
+  const toggleAvailabilitySlot = (day, slotId) => {
+    setAvailability((prev) => {
+      const daySlots = prev[day] || [];
+      const nextSlots = daySlots.includes(slotId)
+        ? daySlots.filter((item) => item !== slotId)
+        : [...daySlots, slotId];
+
+      const next = { ...prev };
+      if (nextSlots.length > 0) {
+        next[day] = nextSlots;
+      } else {
+        delete next[day];
+      }
+      return next;
+    });
+  };
+
+  const setSkillLevel = (sport, level) => {
+    setSkillLevels((prev) => ({ ...prev, [sport]: level }));
   };
 
   const addCustomSport = () => {
@@ -613,6 +767,8 @@ function App() {
       sports: selectedSports,
       squadr_id: newSquadrId,
       isPro: false,
+      availability: {},
+      skillLevels: {},
     };
 
     saveStoredProfile(profileData);
@@ -679,6 +835,8 @@ function App() {
       sports: selectedSports,
       squadr_id: ensuredSquadrId,
       isPro,
+      availability,
+      skillLevels,
     });
 
     upsertUser({
@@ -834,6 +992,8 @@ function App() {
     resetInstantFlow();
     setIsPro(false);
     setProPlan('yearly');
+    setAvailability({});
+    setSkillLevels({});
   };
 
   const handleLogout = async () => {
@@ -1126,6 +1286,8 @@ function App() {
       sports: selectedSports,
       squadr_id: squadrId || stored.squadr_id,
       isPro: true,
+      availability,
+      skillLevels,
     });
 
     setToast('Pro Activated!');
@@ -1550,6 +1712,14 @@ function App() {
         ? request.receiver_name
         : request.sender_name;
 
+    const availabilitySummary = formatAvailabilitySummary(availability);
+    const profileRating = 0;
+    const badgeContext = {
+      sessionsPlayed: sessionsPlayedCount,
+      rating: profileRating,
+      friendsCount: acceptedFriends.length,
+    };
+
     return (
       <div className="profile">
         <header className="profile__header">
@@ -1667,6 +1837,73 @@ function App() {
                 })}
               </div>
 
+              {selectedSports.length > 0 && (
+                <div className="profile__skill-section">
+                  <h3 className="profile__edit-label">Skill level</h3>
+                  {selectedSports.map((sport) => (
+                    <div key={sport} className="profile__skill-row">
+                      <span className="profile__skill-sport">{sport}</span>
+                      <div className="profile__skill-options" role="group" aria-label={`${sport} skill level`}>
+                        {SKILL_LEVELS.map((level) => (
+                          <button
+                            key={level}
+                            type="button"
+                            className={`profile__skill-btn${
+                              (skillLevels[sport] || 'Beginner') === level
+                                ? ' profile__skill-btn--selected'
+                                : ''
+                            }`}
+                            onClick={() => setSkillLevel(sport, level)}
+                            aria-pressed={(skillLevels[sport] || 'Beginner') === level}
+                          >
+                            {level}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="profile__availability-section">
+                <h3 className="profile__edit-label">When do you usually play?</h3>
+                <div className="profile__availability-grid">
+                  {AVAILABILITY_DAYS.map((day) => (
+                    <div key={day} className="profile__availability-day">
+                      <span className="profile__availability-day-label">{day}</span>
+                      <div className="profile__availability-slots">
+                        {TIME_SLOTS.map((slot) => {
+                          const isSelected = (availability[day] || []).includes(
+                            slot.id
+                          );
+                          return (
+                            <button
+                              key={slot.id}
+                              type="button"
+                              className={`profile__availability-slot${
+                                isSelected
+                                  ? ' profile__availability-slot--selected'
+                                  : ''
+                              }`}
+                              onClick={() => toggleAvailabilitySlot(day, slot.id)}
+                              aria-pressed={isSelected}
+                              aria-label={`${day} ${slot.label}`}
+                            >
+                              <span className="profile__availability-slot-label">
+                                {slot.label}
+                              </span>
+                              <span className="profile__availability-slot-sub">
+                                {slot.sub}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <button type="submit" className="login__button">
                 Save
               </button>
@@ -1705,6 +1942,11 @@ function App() {
                   {age && <span className="profile__age">{age}</span>}
                   <span className="profile__city">{city}</span>
                 </p>
+                {availabilitySummary && (
+                  <p className="profile__availability-summary">
+                    {availabilitySummary}
+                  </p>
+                )}
               </div>
 
               <div className="profile__stats">
@@ -1715,16 +1957,61 @@ function App() {
                   <span className="profile__stat-label">Sessions Played</span>
                 </div>
                 <div className="profile__stat">
-                  <span className="profile__stat-value">0</span>
+                  <span className="profile__stat-value">{profileRating}</span>
                   <span className="profile__stat-label">Rating</span>
                 </div>
               </div>
+
+              <section className="profile__section profile__section--badges">
+                <h2 className="profile__section-title">Badges</h2>
+                <div className="profile__badges">
+                  {PROFILE_BADGES.map((badge) => {
+                    const earned = badge.isEarned(badgeContext);
+                    return (
+                      <span
+                        key={badge.id}
+                        className={`profile__badge${
+                          earned ? '' : ' profile__badge--locked'
+                        }`}
+                        title={earned ? badge.name : badge.hint}
+                      >
+                        {!earned && (
+                          <svg
+                            className="profile__badge-lock"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            aria-hidden="true"
+                          >
+                            <rect x="5" y="11" width="14" height="10" rx="2" />
+                            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                          </svg>
+                        )}
+                        <span className="profile__badge-emoji" aria-hidden="true">
+                          {badge.emoji}
+                        </span>
+                        <span className="profile__badge-name">{badge.name}</span>
+                        {!earned && (
+                          <span className="profile__badge-hint">{badge.hint}</span>
+                        )}
+                      </span>
+                    );
+                  })}
+                </div>
+              </section>
 
               {selectedSports.length > 0 && (
                 <div className="profile__sports">
                   {selectedSports.map((sport) => (
                     <span key={sport} className="profile__sport-pill">
                       {sport}
+                      {skillLevels[sport] && (
+                        <span className="profile__sport-skill">
+                          {' '}
+                          · {skillLevels[sport]}
+                        </span>
+                      )}
                     </span>
                   ))}
                 </div>
