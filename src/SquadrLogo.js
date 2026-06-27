@@ -1,3 +1,13 @@
+const SQUADR_WINE = '#7B2D42';
+const SQUADR_WHITE = '#FFFFFF';
+
+const logoTextStyle = {
+  color: SQUADR_WHITE,
+  WebkitTextFillColor: SQUADR_WHITE,
+  background: 'none',
+  mixBlendMode: 'normal',
+};
+
 function SquadrLogo({ size = 'large', className = '' }) {
   return (
     <div
@@ -12,11 +22,13 @@ function SquadrLogo({ size = 'large', className = '' }) {
         aria-hidden="true"
         shapeRendering="geometricPrecision"
       >
-        <circle cx="13" cy="6" r="5" fill="#7B2D42" />
-        <circle cx="6" cy="17" r="5" fill="#7B2D42" />
-        <circle cx="20" cy="17" r="5" fill="#7B2D42" />
+        <circle cx="13" cy="6" r="5" fill={SQUADR_WINE} />
+        <circle cx="6" cy="17" r="5" fill={SQUADR_WINE} />
+        <circle cx="20" cy="17" r="5" fill={SQUADR_WINE} />
       </svg>
-      <span className="squadr-logo__text">SQUADR</span>
+      <span className="squadr-logo__text" style={logoTextStyle}>
+        SQUADR
+      </span>
     </div>
   );
 }
