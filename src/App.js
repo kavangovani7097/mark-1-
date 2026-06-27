@@ -2326,13 +2326,19 @@ function App() {
             Looking for {instantSport} players near {instantLocationPref}
           </p>
 
-          <div className="instant-search__counter">
-            <span className="instant-search__counter-value">
-              {instantMatches.length}
-            </span>
-            <span className="instant-search__counter-label">
-              of {instantPlayersNeeded} players joined
-            </span>
+          <div className="instant-search__counter-wrap">
+            <div className="instant-search__radar" aria-hidden="true">
+              <span className="instant-search__radar-ring" />
+              <span className="instant-search__radar-ring instant-search__radar-ring--delay" />
+            </div>
+            <div className="instant-search__counter">
+              <span className="instant-search__counter-value">
+                {instantMatches.length}
+              </span>
+              <span className="instant-search__counter-label">
+                of {instantPlayersNeeded} players joined
+              </span>
+            </div>
           </div>
 
           <div className="instant-search__timer" aria-label="Time remaining">
@@ -2597,9 +2603,20 @@ function App() {
                 <p className="home__loading">Loading sessions...</p>
               ) : sessionsWithoutInvites.length === 0 &&
                 invitedCards.length === 0 ? (
-                <p className="home__empty">
-                  No upcoming sessions near you. Be the first to create one!
-                </p>
+                <div className="home__empty">
+                  <svg
+                    className="home__empty-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                  </svg>
+                  <p>No upcoming sessions near you. Be the first to create one!</p>
+                </div>
               ) : (
                 sessionsWithoutInvites.map((session) => {
                   const isFull = session.slotsLeft <= 0;
@@ -2938,9 +2955,11 @@ function App() {
     <div className="login">
       <div className="login__content">
         <div className="login__brand">
-          <h1 className="login__logo">
-            <SquadrLogo size="large" />
-          </h1>
+          <div className="login__logo-glow">
+            <h1 className="login__logo">
+              <SquadrLogo size="large" />
+            </h1>
+          </div>
           <p className="login__tagline">Find your crew. Play your sport.</p>
         </div>
 
