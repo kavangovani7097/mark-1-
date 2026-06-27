@@ -286,6 +286,15 @@ test('shows find players tab with filters and player cards', async () => {
 
   await userEvent.click(screen.getByRole('button', { name: 'Instant Sessions' }));
 
+  expect(
+    screen.getByText('Instant Mode is a SQUADR Pro feature')
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Upgrade to Pro' })
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Find Players Now' })).not.toBeInTheDocument();
+  expect(screen.getByText('⚡ Find players in real-time')).toBeInTheDocument();
+
   expect(screen.getByRole('combobox', { name: 'Filter by sport' })).toBeInTheDocument();
   expect(screen.getByRole('group', { name: 'Filter by session type' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '1-on-1' })).toBeDisabled();

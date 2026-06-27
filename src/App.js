@@ -295,6 +295,9 @@ function App() {
   const [myParticipationIds, setMyParticipationIds] = useState([]);
   const [myRatedIds, setMyRatedIds] = useState([]);
 
+  const [isPro, setIsPro] = useState(false);
+  const [proPlan, setProPlan] = useState('yearly');
+
   const inputRefs = useRef([]);
   const fileInputRef = useRef(null);
   const closedRequestRef = useRef(false);
@@ -311,6 +314,7 @@ function App() {
     if (stored.city) setCity(stored.city);
     if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
     if (stored.squadr_id) setSquadrId(stored.squadr_id);
+    if (stored.isPro) setIsPro(true);
   }, []);
 
   const routeAfterAuth = useCallback(() => {
@@ -321,6 +325,7 @@ function App() {
       if (stored.city) setCity(stored.city);
       if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
       if (stored.squadr_id) setSquadrId(stored.squadr_id);
+      if (stored.isPro) setIsPro(true);
       setStep('home');
     } else {
       setStep('onboarding');
@@ -607,6 +612,7 @@ function App() {
       city,
       sports: selectedSports,
       squadr_id: newSquadrId,
+      isPro: false,
     };
 
     saveStoredProfile(profileData);
@@ -672,6 +678,7 @@ function App() {
       city,
       sports: selectedSports,
       squadr_id: ensuredSquadrId,
+      isPro,
     });
 
     upsertUser({
@@ -825,6 +832,8 @@ function App() {
     setAddFriendSearched(false);
     setAddFriendStatus('');
     resetInstantFlow();
+    setIsPro(false);
+    setProPlan('yearly');
   };
 
   const handleLogout = async () => {
@@ -1040,7 +1049,7 @@ function App() {
     createSessionType === 'Small Group' || createSessionType === 'Large Group';
 
   const isOneOnOneUnlocked =
-    groupSessionsPlayed >= GROUP_SESSIONS_TO_UNLOCK_ONE_ON_ONE;
+    isPro || groupSessionsPlayed >= GROUP_SESSIONS_TO_UNLOCK_ONE_ON_ONE;
 
   const filteredPlayers = SAMPLE_PLAYERS.filter((player) => {
     if (findSportFilter && !player.sports.includes(findSportFilter)) {
@@ -1092,8 +1101,39 @@ function App() {
   }, []);
 
   const handleOpenInstantFind = () => {
+    if (!isPro) {
+      setStep('pro');
+      return;
+    }
     resetInstantFlow();
     setStep('instantSport');
+  };
+
+  const handleOpenPro = () => {
+    setProPlan('yearly');
+    setStep('pro');
+  };
+
+  const handleActivatePro = () => {
+    setIsPro(true);
+
+    const stored = loadStoredProfile() || {};
+    saveStoredProfile({
+      ...stored,
+      first_name: firstName,
+      age: age === '' ? null : parseInt(age, 10),
+      city,
+      sports: selectedSports,
+      squadr_id: squadrId || stored.squadr_id,
+      isPro: true,
+    });
+
+    setToast('Pro Activated!');
+    setStep('home');
+  };
+
+  const handleProMaybeLater = () => {
+    setStep('home');
   };
 
   const handleInstantSelectSport = (sport) => {
@@ -1254,7 +1294,7 @@ function App() {
   };
 
   useEffect(() => {
-    if (!openToPlay || step !== 'home') return undefined;
+    if (!openToPlay || !isPro || step !== 'home') return undefined;
 
     let active = true;
     const poll = async () => {
@@ -1286,6 +1326,7 @@ function App() {
     };
   }, [
     openToPlay,
+    isPro,
     step,
     firstName,
     selectedSports,
@@ -1633,7 +1674,12 @@ function App() {
           ) : (
             <>
               <div className="profile__identity">
-                <h1 className="profile__name">{capitalize(firstName)}</h1>
+                <h1 className="profile__name">
+                  {capitalize(firstName)}
+                  {isPro && (
+                    <span className="profile__pro-badge">Pro</span>
+                  )}
+                </h1>
                 {squadrId && (
                   <button
                     type="button"
@@ -2444,6 +2490,105 @@ function App() {
     );
   }
 
+  if (step === 'pro') {
+    const proFeatures = [
+      '⚡ Instant Mode — find players right now',
+      '🎯 Priority matching — shown first to nearby players',
+      '🔒 Private sessions — invite only',
+      '🏆 Pro badge on profile',
+      '📊 Session stats and history',
+      '1-on-1 unlocked immediately',
+    ];
+
+    return (
+      <div className="pro">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={handleProMaybeLater}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <span className="create__header-spacer" aria-hidden="true" />
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="pro__main">
+          <div className="pro__logo">
+            <SquadrLogo size="large" />
+          </div>
+
+          <h1 className="pro__headline">Play More. Wait Less.</h1>
+          <p className="pro__subheadline">
+            Unlock Instant Mode and premium features
+          </p>
+
+          <div className="pro__pricing">
+            <button
+              type="button"
+              className={`pro__plan${proPlan === 'monthly' ? ' pro__plan--selected' : ''}`}
+              onClick={() => setProPlan('monthly')}
+              aria-pressed={proPlan === 'monthly'}
+            >
+              <span className="pro__plan-label">Monthly</span>
+              <span className="pro__plan-price">₹149</span>
+              <span className="pro__plan-period">/month</span>
+              <span className="pro__plan-note">Billed monthly</span>
+            </button>
+
+            <button
+              type="button"
+              className={`pro__plan pro__plan--recommended${proPlan === 'yearly' ? ' pro__plan--selected' : ''}`}
+              onClick={() => setProPlan('yearly')}
+              aria-pressed={proPlan === 'yearly'}
+            >
+              <span className="pro__plan-badge">Save 44%</span>
+              <span className="pro__plan-label">Yearly</span>
+              <span className="pro__plan-price">₹999</span>
+              <span className="pro__plan-period">/year</span>
+              <span className="pro__plan-note">Best value</span>
+            </button>
+          </div>
+
+          <ul className="pro__features">
+            {proFeatures.map((feature) => (
+              <li key={feature} className="pro__feature">
+                {feature}
+              </li>
+            ))}
+          </ul>
+
+          <button
+            type="button"
+            className="login__button pro__continue"
+            onClick={handleActivatePro}
+          >
+            Continue
+          </button>
+
+          <button
+            type="button"
+            className="pro__later"
+            onClick={handleProMaybeLater}
+          >
+            Maybe Later
+          </button>
+        </main>
+      </div>
+    );
+  }
+
   if (step === 'home') {
     const now = Date.now();
     const sessionsToRate = sessions.filter(
@@ -2669,16 +2814,47 @@ function App() {
             </div>
           ) : (
             <div className="find">
-              <button
-                type="button"
-                className="find__instant-btn"
-                onClick={handleOpenInstantFind}
-              >
-                <span className="find__instant-bolt" aria-hidden="true">
-                  ⚡
-                </span>
-                Find Players Now
-              </button>
+              {!isPro ? (
+                <div className="pro-lock">
+                  <svg
+                    className="pro-lock__icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <rect x="5" y="11" width="14" height="10" rx="2" />
+                    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                  </svg>
+                  <p className="pro-lock__text">
+                    Instant Mode is a SQUADR Pro feature
+                  </p>
+                  <button
+                    type="button"
+                    className="login__button pro-lock__upgrade"
+                    onClick={handleOpenPro}
+                  >
+                    Upgrade to Pro
+                  </button>
+                  <ul className="pro-lock__teasers">
+                    <li>⚡ Find players in real-time</li>
+                    <li>🎯 Priority matching</li>
+                    <li>🏆 Pro badge on your profile</li>
+                  </ul>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="find__instant-btn"
+                  onClick={handleOpenInstantFind}
+                >
+                  <span className="find__instant-bolt" aria-hidden="true">
+                    ⚡
+                  </span>
+                  Find Players Now
+                </button>
+              )}
 
               <div className="find__filters">
                 <select
