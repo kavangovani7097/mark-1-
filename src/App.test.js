@@ -106,7 +106,9 @@ beforeEach(() => {
       String(url).includes('/rest/v1/instant_matches') ||
       String(url).includes('/rest/v1/messages') ||
       String(url).includes('/rest/v1/session_participants') ||
-      String(url).includes('/rest/v1/ratings')
+      String(url).includes('/rest/v1/ratings') ||
+      String(url).includes('/rest/v1/users') ||
+      String(url).includes('/rest/v1/friend_requests')
     ) {
       return Promise.resolve({
         ok: true,

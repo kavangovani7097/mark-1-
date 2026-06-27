@@ -16,6 +16,14 @@ import {
   submitRating,
   updateRequestStatus,
 } from './instantPlay';
+import {
+  fetchFriendRequests,
+  findUserBySquadrId,
+  generateSquadrId,
+  sendFriendRequest,
+  updateFriendRequestStatus,
+  upsertUser,
+} from './friends';
 import './App.css';
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
@@ -267,6 +275,15 @@ function App() {
   const [profilePic, setProfilePic] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [squadrId, setSquadrId] = useState('');
+  const [friendsTab, setFriendsTab] = useState('friends');
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [addFriendQuery, setAddFriendQuery] = useState('');
+  const [addFriendResult, setAddFriendResult] = useState(null);
+  const [addFriendSearched, setAddFriendSearched] = useState(false);
+  const [addFriendStatus, setAddFriendStatus] = useState('');
+
   const [toast, setToast] = useState('');
   const [joinedSessionIds, setJoinedSessionIds] = useState([]);
   const [joiningSessionId, setJoiningSessionId] = useState(null);
@@ -288,6 +305,7 @@ function App() {
     if (stored.age != null) setAge(String(stored.age));
     if (stored.city) setCity(stored.city);
     if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
+    if (stored.squadr_id) setSquadrId(stored.squadr_id);
   }, []);
 
   const routeAfterAuth = useCallback(() => {
@@ -297,6 +315,7 @@ function App() {
       if (stored.age != null) setAge(String(stored.age));
       if (stored.city) setCity(stored.city);
       if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
+      if (stored.squadr_id) setSquadrId(stored.squadr_id);
       setStep('home');
     } else {
       setStep('onboarding');
@@ -555,14 +574,28 @@ function App() {
   };
 
   const handleSportsContinue = () => {
+    const newSquadrId = squadrId || generateSquadrId();
+    if (!squadrId) setSquadrId(newSquadrId);
+
     const profileData = {
       first_name: firstName,
       age: parseInt(age, 10),
       city,
       sports: selectedSports,
+      squadr_id: newSquadrId,
     };
 
     saveStoredProfile(profileData);
+
+    upsertUser({
+      name: firstName,
+      squadrId: newSquadrId,
+      city,
+      sports: selectedSports,
+    }).catch(() => {
+      // ignore — profile still saved locally
+    });
+
     setStep('home');
   };
 
@@ -605,13 +638,129 @@ function App() {
   const handleSaveProfile = (e) => {
     if (e) e.preventDefault();
 
+    const ensuredSquadrId = squadrId || generateSquadrId();
+    if (!squadrId) setSquadrId(ensuredSquadrId);
+
     saveStoredProfile({
       first_name: firstName,
       age: age === '' ? null : parseInt(age, 10),
       city,
       sports: selectedSports,
+      squadr_id: ensuredSquadrId,
     });
+
+    upsertUser({
+      name: firstName,
+      squadrId: ensuredSquadrId,
+      city,
+      sports: selectedSports,
+    }).catch(() => {
+      // ignore — profile still saved locally
+    });
+
     setEditingProfile(false);
+  };
+
+  const loadFriendRequests = useCallback(async () => {
+    if (!squadrId) return;
+    try {
+      const rows = await fetchFriendRequests(squadrId);
+      setFriendRequests(rows);
+    } catch {
+      // ignore — friends simply won't load
+    }
+  }, [squadrId]);
+
+  useEffect(() => {
+    if (step === 'profile' && squadrId) {
+      loadFriendRequests();
+    }
+  }, [step, squadrId, loadFriendRequests]);
+
+  const handleCopySquadrId = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(squadrId);
+      }
+      setToast('Copied!');
+    } catch {
+      setToast('Could not copy');
+    }
+  };
+
+  const handleOpenAddFriend = () => {
+    setShowAddFriend(true);
+    setAddFriendQuery('');
+    setAddFriendResult(null);
+    setAddFriendSearched(false);
+    setAddFriendStatus('');
+  };
+
+  const handleCloseAddFriend = () => {
+    setShowAddFriend(false);
+    setAddFriendQuery('');
+    setAddFriendResult(null);
+    setAddFriendSearched(false);
+    setAddFriendStatus('');
+  };
+
+  const handleSearchFriend = async (e) => {
+    if (e) e.preventDefault();
+    const query = addFriendQuery.trim();
+    if (!query) return;
+
+    setAddFriendStatus('');
+    setAddFriendSearched(false);
+    try {
+      const user = await findUserBySquadrId(query);
+      setAddFriendResult(user);
+    } catch {
+      setAddFriendResult(null);
+    } finally {
+      setAddFriendSearched(true);
+    }
+  };
+
+  const handleSendFriendRequest = async () => {
+    if (!addFriendResult) return;
+
+    try {
+      await sendFriendRequest({
+        senderSquadrId: squadrId,
+        senderName: firstName,
+        receiverSquadrId: addFriendResult.squadr_id,
+        receiverName: addFriendResult.name,
+      });
+      setToast('Request sent!');
+      handleCloseAddFriend();
+      loadFriendRequests();
+    } catch {
+      setAddFriendStatus('Could not send request. Try again.');
+    }
+  };
+
+  const handleAcceptFriend = async (request) => {
+    setFriendRequests((prev) =>
+      prev.map((item) =>
+        item.id === request.id ? { ...item, status: 'accepted' } : item
+      )
+    );
+    try {
+      await updateFriendRequestStatus(request.id, 'accepted');
+    } catch {
+      loadFriendRequests();
+    }
+  };
+
+  const handleDeclineFriend = async (request) => {
+    setFriendRequests((prev) =>
+      prev.filter((item) => item.id !== request.id)
+    );
+    try {
+      await updateFriendRequestStatus(request.id, 'declined');
+    } catch {
+      loadFriendRequests();
+    }
   };
 
   const resetAppState = () => {
@@ -640,6 +789,14 @@ function App() {
     setMyParticipationIds([]);
     setMyRatedIds([]);
     setToast('');
+    setSquadrId('');
+    setFriendsTab('friends');
+    setFriendRequests([]);
+    setShowAddFriend(false);
+    setAddFriendQuery('');
+    setAddFriendResult(null);
+    setAddFriendSearched(false);
+    setAddFriendStatus('');
     resetInstantFlow();
   };
 
@@ -1247,6 +1404,24 @@ function App() {
       (session) => session.city && city && session.city === city
     ).length;
 
+    const acceptedFriends = friendRequests.filter(
+      (request) =>
+        request.status === 'accepted' &&
+        (request.sender_squadr_id === squadrId ||
+          request.receiver_squadr_id === squadrId)
+    );
+
+    const pendingIncoming = friendRequests.filter(
+      (request) =>
+        request.status === 'pending' &&
+        request.receiver_squadr_id === squadrId
+    );
+
+    const friendDisplayName = (request) =>
+      request.sender_squadr_id === squadrId
+        ? request.receiver_name
+        : request.sender_name;
+
     return (
       <div className="profile">
         <header className="profile__header">
@@ -1372,6 +1547,27 @@ function App() {
             <>
               <div className="profile__identity">
                 <h1 className="profile__name">{capitalize(firstName)}</h1>
+                {squadrId && (
+                  <button
+                    type="button"
+                    className="profile__squadr-id"
+                    onClick={handleCopySquadrId}
+                    aria-label={`Copy SQUADR ID ${squadrId}`}
+                  >
+                    <span className="profile__squadr-id-text">{squadrId}</span>
+                    <svg
+                      className="profile__squadr-id-copy"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <rect x="9" y="9" width="11" height="11" rx="2" />
+                      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                    </svg>
+                  </button>
+                )}
                 <p className="profile__meta">
                   {age && <span className="profile__age">{age}</span>}
                   <span className="profile__city">{city}</span>
@@ -1406,6 +1602,104 @@ function App() {
                 <p className="profile__empty">
                   Play with someone to add them to your crew
                 </p>
+              </section>
+
+              <section className="profile__section">
+                <div className="profile__section-head">
+                  <h2 className="profile__section-title">Friends</h2>
+                  <button
+                    type="button"
+                    className="friends__add-btn"
+                    onClick={handleOpenAddFriend}
+                  >
+                    + Add Friend
+                  </button>
+                </div>
+
+                <div className="friends__tabs" role="tablist">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={friendsTab === 'friends'}
+                    className={`friends__tab${
+                      friendsTab === 'friends' ? ' friends__tab--active' : ''
+                    }`}
+                    onClick={() => setFriendsTab('friends')}
+                  >
+                    Friends
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={friendsTab === 'requests'}
+                    className={`friends__tab${
+                      friendsTab === 'requests' ? ' friends__tab--active' : ''
+                    }`}
+                    onClick={() => setFriendsTab('requests')}
+                  >
+                    Requests
+                    {pendingIncoming.length > 0 && (
+                      <span className="friends__badge">
+                        {pendingIncoming.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {friendsTab === 'friends' ? (
+                  acceptedFriends.length === 0 ? (
+                    <p className="profile__empty">
+                      No friends yet. Add someone by their SQUADR ID.
+                    </p>
+                  ) : (
+                    <div className="friends__list">
+                      {acceptedFriends.map((request) => {
+                        const name = friendDisplayName(request);
+                        return (
+                          <div key={request.id} className="friends__card">
+                            <div className="friends__avatar">
+                              {getInitials(name)}
+                            </div>
+                            <span className="friends__name">
+                              {capitalize(name)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                ) : pendingIncoming.length === 0 ? (
+                  <p className="profile__empty">No pending requests</p>
+                ) : (
+                  <div className="friends__list">
+                    {pendingIncoming.map((request) => (
+                      <div key={request.id} className="friends__card">
+                        <div className="friends__avatar">
+                          {getInitials(request.sender_name)}
+                        </div>
+                        <span className="friends__name">
+                          {capitalize(request.sender_name)}
+                        </span>
+                        <div className="friends__actions">
+                          <button
+                            type="button"
+                            className="friends__decline"
+                            onClick={() => handleDeclineFriend(request)}
+                          >
+                            Decline
+                          </button>
+                          <button
+                            type="button"
+                            className="friends__accept"
+                            onClick={() => handleAcceptFriend(request)}
+                          >
+                            Accept
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               <button
@@ -1453,6 +1747,75 @@ function App() {
             </div>
           </div>
         )}
+
+        {showAddFriend && (
+          <div className="confirm" role="dialog" aria-modal="true">
+            <div className="confirm__card add-friend__card">
+              <h2 className="confirm__title">Add Friend</h2>
+              <form className="add-friend__form" onSubmit={handleSearchFriend}>
+                <input
+                  type="text"
+                  className="login__input"
+                  placeholder="Enter SQUADR ID"
+                  value={addFriendQuery}
+                  onChange={(e) => setAddFriendQuery(e.target.value)}
+                  autoComplete="off"
+                />
+                <button type="submit" className="login__button">
+                  Search
+                </button>
+              </form>
+
+              {addFriendSearched &&
+                (addFriendResult ? (
+                  <div className="add-friend__result">
+                    <div className="friends__avatar">
+                      {getInitials(addFriendResult.name)}
+                    </div>
+                    <div className="add-friend__result-info">
+                      <span className="friends__name">
+                        {capitalize(addFriendResult.name)}
+                      </span>
+                      {addFriendResult.city && (
+                        <span className="add-friend__result-city">
+                          {addFriendResult.city}
+                        </span>
+                      )}
+                    </div>
+                    {addFriendResult.squadr_id === squadrId ? (
+                      <span className="add-friend__hint">That's you!</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="friends__accept"
+                        onClick={handleSendFriendRequest}
+                      >
+                        Send Request
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="add-friend__empty">
+                    No player found with that SQUADR ID
+                  </p>
+                ))}
+
+              {addFriendStatus && (
+                <p className="add-friend__error">{addFriendStatus}</p>
+              )}
+
+              <button
+                type="button"
+                className="confirm__cancel add-friend__close"
+                onClick={handleCloseAddFriend}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {toast && <div className="toast">{toast}</div>}
       </div>
     );
   }
