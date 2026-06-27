@@ -17,11 +17,14 @@ import {
   updateRequestStatus,
 } from './instantPlay';
 import {
+  createSessionInvites,
   fetchFriendRequests,
+  fetchPendingInvites,
   findUserBySquadrId,
   generateSquadrId,
   sendFriendRequest,
   updateFriendRequestStatus,
+  updateInviteStatus,
   upsertUser,
 } from './friends';
 import './App.css';
@@ -278,6 +281,8 @@ function App() {
   const [squadrId, setSquadrId] = useState('');
   const [friendsTab, setFriendsTab] = useState('friends');
   const [friendRequests, setFriendRequests] = useState([]);
+  const [invitedFriends, setInvitedFriends] = useState([]);
+  const [pendingInvites, setPendingInvites] = useState([]);
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [addFriendQuery, setAddFriendQuery] = useState('');
   const [addFriendResult, setAddFriendResult] = useState(null);
@@ -403,6 +408,25 @@ function App() {
       fetchSessions();
     }
   }, [step, fetchSessions]);
+
+  useEffect(() => {
+    if (step !== 'home' || !squadrId) return undefined;
+
+    let active = true;
+    const loadInvites = async () => {
+      try {
+        const invites = await fetchPendingInvites(squadrId);
+        if (active) setPendingInvites(invites);
+      } catch {
+        // ignore — invites simply won't show
+      }
+    };
+
+    loadInvites();
+    return () => {
+      active = false;
+    };
+  }, [step, squadrId]);
 
   useEffect(() => {
     if (step !== 'home' || !firstName) return undefined;
@@ -600,6 +624,7 @@ function App() {
   };
 
   const handleOpenCreateSession = () => {
+    setInvitedFriends([]);
     setStep('createSession');
   };
 
@@ -672,7 +697,7 @@ function App() {
   }, [squadrId]);
 
   useEffect(() => {
-    if (step === 'profile' && squadrId) {
+    if ((step === 'profile' || step === 'createSession') && squadrId) {
       loadFriendRequests();
     }
   }, [step, squadrId, loadFriendRequests]);
@@ -792,6 +817,8 @@ function App() {
     setSquadrId('');
     setFriendsTab('friends');
     setFriendRequests([]);
+    setInvitedFriends([]);
+    setPendingInvites([]);
     setShowAddFriend(false);
     setAddFriendQuery('');
     setAddFriendResult(null);
@@ -925,28 +952,88 @@ function App() {
     const parsedMaxPlayers = isOneOnOne ? 2 : parseInt(maxPlayers, 10);
     const slotsRemaining = isOneOnOne ? 1 : parsedMaxPlayers;
 
-    const { error } =
-      (await supabase.from('sessions').insert({
-        sport: createSessionSport,
-        session_type: createSessionType,
-        scheduled_at: scheduledAt,
-        venue,
-        max_players: parsedMaxPlayers,
-        slots_remaining: slotsRemaining,
-        city,
-      })) ?? {};
+    const insertQuery = supabase.from('sessions').insert({
+      sport: createSessionSport,
+      session_type: createSessionType,
+      scheduled_at: scheduledAt,
+      venue,
+      max_players: parsedMaxPlayers,
+      slots_remaining: slotsRemaining,
+      city,
+    });
+
+    const { data, error } =
+      (await (insertQuery && typeof insertQuery.select === 'function'
+        ? insertQuery.select()
+        : insertQuery)) ?? {};
 
     if (error) {
       setCreateSessionError(error.message);
     } else {
+      const newSessionId = Array.isArray(data) ? data[0]?.id : data?.id;
+      if (newSessionId && invitedFriends.length > 0) {
+        try {
+          await createSessionInvites(newSessionId, invitedFriends);
+        } catch {
+          // ignore — session still created
+        }
+      }
+
       setCreateSessionSport('');
       setCreateSessionType('');
       setSessionDateTime('');
       setVenue('');
       setMaxPlayers('');
+      setInvitedFriends([]);
     }
 
     setStep('home');
+  };
+
+  const toggleInviteFriend = (friend) => {
+    setInvitedFriends((prev) =>
+      prev.some((item) => item.squadrId === friend.squadrId)
+        ? prev.filter((item) => item.squadrId !== friend.squadrId)
+        : [...prev, friend]
+    );
+  };
+
+  const handleAcceptInvite = async (invite) => {
+    const session = sessions.find((item) => item.id === invite.session_id);
+    setPendingInvites((prev) => prev.filter((item) => item.id !== invite.id));
+
+    try {
+      await updateInviteStatus(invite.id, 'accepted');
+      if (session) {
+        await joinSession({
+          sessionId: session.id,
+          playerName: firstName,
+          slotsRemaining: session.slotsLeft,
+        });
+        setJoinedSessionIds((prev) =>
+          prev.includes(session.id) ? prev : [...prev, session.id]
+        );
+        setSessions((prev) =>
+          prev.map((item) =>
+            item.id === session.id
+              ? { ...item, slotsLeft: Math.max(0, item.slotsLeft - 1) }
+              : item
+          )
+        );
+      }
+      setToast("You've joined!");
+    } catch {
+      setToast('Could not accept invite. Please try again.');
+    }
+  };
+
+  const handleDeclineInvite = async (invite) => {
+    setPendingInvites((prev) => prev.filter((item) => item.id !== invite.id));
+    try {
+      await updateInviteStatus(invite.id, 'declined');
+    } catch {
+      // ignore — already removed from view
+    }
   };
 
   const showMaxPlayers =
@@ -1821,6 +1908,19 @@ function App() {
   }
 
   if (step === 'createSession') {
+    const inviteFriendOptions = friendRequests
+      .filter(
+        (request) =>
+          request.status === 'accepted' &&
+          (request.sender_squadr_id === squadrId ||
+            request.receiver_squadr_id === squadrId)
+      )
+      .map((request) =>
+        request.sender_squadr_id === squadrId
+          ? { squadrId: request.receiver_squadr_id, name: request.receiver_name }
+          : { squadrId: request.sender_squadr_id, name: request.sender_name }
+      );
+
     return (
       <div className="create">
         <header className="create__header">
@@ -1921,6 +2021,53 @@ function App() {
                 />
               </section>
             )}
+
+            <section className="create__section">
+              <h2 className="create__label">Invite Friends</h2>
+              {inviteFriendOptions.length === 0 ? (
+                <p className="create__invite-empty">
+                  Add friends to invite them to your sessions.
+                </p>
+              ) : (
+                <div className="invite-friends">
+                  {inviteFriendOptions.map((friend) => {
+                    const isSelected = invitedFriends.some(
+                      (item) => item.squadrId === friend.squadrId
+                    );
+                    return (
+                      <button
+                        key={friend.squadrId}
+                        type="button"
+                        className={`invite-friends__card${
+                          isSelected ? ' invite-friends__card--selected' : ''
+                        }`}
+                        onClick={() => toggleInviteFriend(friend)}
+                        aria-pressed={isSelected}
+                      >
+                        <span className="invite-friends__avatar">
+                          {getInitials(friend.name)}
+                        </span>
+                        <span className="invite-friends__name">
+                          {capitalize(friend.name)}
+                        </span>
+                        {isSelected && (
+                          <svg
+                            className="invite-friends__check"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            aria-hidden="true"
+                          >
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
             <button type="submit" className="login__button create__submit">
               Create Session
@@ -2307,6 +2454,25 @@ function App() {
         !session.scheduledAt || new Date(session.scheduledAt) >= expiryCutoff
     );
 
+    const invitedCards = pendingInvites
+      .map((invite) => ({
+        invite,
+        session: sessions.find((item) => item.id === invite.session_id),
+      }))
+      .filter(
+        ({ session }) =>
+          session &&
+          (!session.scheduledAt ||
+            new Date(session.scheduledAt) >= expiryCutoff)
+      );
+
+    const invitedSessionIds = new Set(
+      invitedCards.map(({ session }) => session.id)
+    );
+    const sessionsWithoutInvites = visibleSessions.filter(
+      (session) => !invitedSessionIds.has(session.id)
+    );
+
     return (
       <div className="home">
         <header className="home__header">
@@ -2365,6 +2531,38 @@ function App() {
         <main className="home__main">
           {activeTab === 'live' ? (
             <div className="home__sessions">
+              {invitedCards.map(({ invite, session }) => (
+                <article
+                  key={`invite-${invite.id}`}
+                  className="home__session-card home__session-card--invited"
+                >
+                  <div className="home__session-top">
+                    <div className="home__session-heading">
+                      <span className="home__session-badge">Invited</span>
+                      <h2 className="home__session-sport">{session.sport}</h2>
+                    </div>
+                  </div>
+                  <p className="home__session-detail">{session.time}</p>
+                  <p className="home__session-detail">{session.location}</p>
+                  <div className="home__invite-actions">
+                    <button
+                      type="button"
+                      className="friends__decline"
+                      onClick={() => handleDeclineInvite(invite)}
+                    >
+                      Decline
+                    </button>
+                    <button
+                      type="button"
+                      className="friends__accept"
+                      onClick={() => handleAcceptInvite(invite)}
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </article>
+              ))}
+
               {sessionsToRate.map((session) => (
                 <article key={`rate-${session.id}`} className="rate-card">
                   <div className="rate-card__info">
@@ -2397,12 +2595,13 @@ function App() {
 
               {sessionsLoading ? (
                 <p className="home__loading">Loading sessions...</p>
-              ) : visibleSessions.length === 0 ? (
+              ) : sessionsWithoutInvites.length === 0 &&
+                invitedCards.length === 0 ? (
                 <p className="home__empty">
                   No upcoming sessions near you. Be the first to create one!
                 </p>
               ) : (
-                visibleSessions.map((session) => {
+                sessionsWithoutInvites.map((session) => {
                   const isFull = session.slotsLeft <= 0;
                   const hasJoined = joinedSessionIds.includes(session.id);
                   const isJoining = joiningSessionId === session.id;

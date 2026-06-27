@@ -87,3 +87,45 @@ export async function updateFriendRequestStatus(id, status) {
     body: JSON.stringify({ status }),
   });
 }
+
+export async function createSessionInvites(sessionId, invitees) {
+  if (!sessionId || !Array.isArray(invitees) || invitees.length === 0) {
+    return;
+  }
+
+  const rows = invitees.map((invitee) => ({
+    session_id: sessionId,
+    invitee_squadr_id: invitee.squadrId,
+    invitee_name: invitee.name,
+    status: 'pending',
+  }));
+
+  await fetch(restUrl('session_invites'), {
+    method: 'POST',
+    headers: restHeaders(),
+    body: JSON.stringify(rows),
+  });
+}
+
+export async function fetchPendingInvites(squadrId) {
+  const params = new URLSearchParams({
+    select: '*',
+    invitee_squadr_id: `eq.${squadrId}`,
+    status: 'eq.pending',
+    order: 'created_at.desc',
+  });
+
+  const response = await fetch(`${restUrl('session_invites')}?${params}`, {
+    headers: restHeaders(),
+  });
+
+  return asArray(await response.json());
+}
+
+export async function updateInviteStatus(id, status) {
+  await fetch(`${restUrl('session_invites')}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: restHeaders(),
+    body: JSON.stringify({ status }),
+  });
+}
