@@ -35,6 +35,23 @@ export async function upsertUser({ name, squadrId, city, sports, lat, lng }) {
   });
 }
 
+export async function fetchDiscoverablePlayers({ excludeSquadrId } = {}) {
+  const params = new URLSearchParams({
+    select: 'squadr_id,name,city,sports',
+    order: 'name.asc',
+  });
+
+  if (excludeSquadrId) {
+    params.set('squadr_id', `neq.${excludeSquadrId}`);
+  }
+
+  const response = await fetch(`${restUrl('users')}?${params}`, {
+    headers: restHeaders(),
+  });
+
+  return asArray(await response.json());
+}
+
 export async function findUserBySquadrId(squadrId) {
   const params = new URLSearchParams({
     select: '*',

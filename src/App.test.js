@@ -297,16 +297,11 @@ test('shows find players tab with filters and player cards', async () => {
   expect(screen.getByRole('combobox', { name: 'Filter by sport' })).toBeInTheDocument();
   expect(screen.getByRole('group', { name: 'Filter by session type' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '1-on-1' })).not.toBeDisabled();
-  expect(screen.getByRole('heading', { name: 'Priya' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Rohan' })).toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Meera' })).toBeInTheDocument();
-  expect(screen.getAllByRole('button', { name: 'Invite to Play' })).toHaveLength(3);
-  expect(screen.getByText('24 sessions')).toBeInTheDocument();
+  expect(
+    await screen.findByText('No players found. Try adjusting your filters.')
+  ).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Invite to Play' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Create new session' })).not.toBeInTheDocument();
-
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Filter by sport' }), 'Yoga');
-  expect(screen.queryByRole('heading', { name: 'Priya' })).not.toBeInTheDocument();
-  expect(screen.getByRole('heading', { name: 'Meera' })).toBeInTheDocument();
 });
 
 test('opens session detail when tapping a session card', async () => {

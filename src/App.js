@@ -22,6 +22,7 @@ import {
 import {
   createSessionInvites,
   fetchFriendRequests,
+  fetchDiscoverablePlayers,
   fetchPendingInvites,
   findUserBySquadrId,
   generateSquadrId,
@@ -136,33 +137,6 @@ const DEFAULT_SPORTS = [
 ];
 
 const SESSION_TYPES = ['1-on-1', 'Small Group', 'Large Group'];
-
-const SAMPLE_PLAYERS = [
-  {
-    id: 1,
-    firstName: 'Priya',
-    city: 'Ahmedabad',
-    sports: ['Badminton', 'Tennis'],
-    sessionsPlayed: 24,
-    sessionTypes: ['Small Group', 'Large Group'],
-  },
-  {
-    id: 2,
-    firstName: 'Rohan',
-    city: 'Mumbai',
-    sports: ['Football', 'Cricket'],
-    sessionsPlayed: 18,
-    sessionTypes: ['Small Group', 'Large Group', '1-on-1'],
-  },
-  {
-    id: 3,
-    firstName: 'Meera',
-    city: 'Pune',
-    sports: ['Yoga', 'Swimming'],
-    sessionsPlayed: 12,
-    sessionTypes: ['Small Group'],
-  },
-];
 
 const GROUP_SESSIONS_TO_UNLOCK_ONE_ON_ONE = 4;
 
@@ -414,6 +388,8 @@ function App() {
   const [maxPlayers, setMaxPlayers] = useState('');
   const [findSportFilter, setFindSportFilter] = useState('');
   const [findSessionTypeFilter, setFindSessionTypeFilter] = useState('');
+  const [findPlayers, setFindPlayers] = useState([]);
+  const [findPlayersLoading, setFindPlayersLoading] = useState(false);
   const [groupSessionsPlayed] = useState(0);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [loginError, setLoginError] = useState('');
@@ -718,6 +694,30 @@ function App() {
       active = false;
     };
   }, [step, firstName]);
+
+  useEffect(() => {
+    if (step !== 'home' || activeTab !== 'instant' || !isPro) return undefined;
+
+    let active = true;
+    const loadFindPlayers = async () => {
+      setFindPlayersLoading(true);
+      try {
+        const players = await fetchDiscoverablePlayers({
+          excludeSquadrId: squadrId || undefined,
+        });
+        if (active) setFindPlayers(players);
+      } catch {
+        if (active) setFindPlayers([]);
+      } finally {
+        if (active) setFindPlayersLoading(false);
+      }
+    };
+
+    loadFindPlayers();
+    return () => {
+      active = false;
+    };
+  }, [step, activeTab, isPro, squadrId]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -1340,19 +1340,6 @@ function App() {
 
   const isOneOnOneUnlocked =
     isPro || groupSessionsPlayed >= GROUP_SESSIONS_TO_UNLOCK_ONE_ON_ONE;
-
-  const filteredPlayers = SAMPLE_PLAYERS.filter((player) => {
-    if (findSportFilter && !player.sports.includes(findSportFilter)) {
-      return false;
-    }
-    if (
-      findSessionTypeFilter &&
-      !player.sessionTypes.includes(findSessionTypeFilter)
-    ) {
-      return false;
-    }
-    return true;
-  });
 
   const handleFindSessionTypeFilter = (type) => {
     if (type === '1-on-1' && !isOneOnOneUnlocked) {
@@ -3227,8 +3214,7 @@ function App() {
       <div className="instant-search">
         <div className="instant-search__content">
           <div className="instant-search__pulse" aria-hidden="true">
-            <span className="instant-search__pulse-ring" />
-            <span className="instant-search__pulse-core" />
+            <span className="instant-search__pulse-dot" />
           </div>
 
           <h1 className="instant-search__title">Searching...</h1>
@@ -3238,10 +3224,6 @@ function App() {
           </p>
 
           <div className="instant-search__counter-wrap">
-            <div className="instant-search__radar" aria-hidden="true">
-              <span className="instant-search__radar-ring" />
-              <span className="instant-search__radar-ring instant-search__radar-ring--delay" />
-            </div>
             <div className="instant-search__counter">
               <span className="instant-search__counter-value">
                 {instantMatches.length}
@@ -3744,29 +3726,52 @@ function App() {
               </div>
 
               <div className="find__players">
-                {filteredPlayers.map((player) => (
-                  <article key={player.id} className="find__player-card">
-                    <div className="find__player-top">
-                      <div className="find__player-heading">
-                        <h2 className="find__player-name">{player.firstName}</h2>
-                        <p className="find__player-city">{player.city}</p>
+                {(() => {
+                  const visibleFindPlayers = findPlayers.filter((player) => {
+                    if (!findSportFilter) return true;
+                    const sports = Array.isArray(player.sports) ? player.sports : [];
+                    return sports.includes(findSportFilter);
+                  });
+
+                  if (findPlayersLoading) {
+                    return null;
+                  }
+
+                  if (visibleFindPlayers.length === 0) {
+                    return (
+                      <p className="find__empty">
+                        No players found. Try adjusting your filters.
+                      </p>
+                    );
+                  }
+
+                  return visibleFindPlayers.map((player) => (
+                    <article key={player.squadr_id} className="find__player-card">
+                      <div className="find__player-top">
+                        <div className="find__player-heading">
+                          <h2 className="find__player-name">
+                            {capitalize(player.name?.split(' ')[0] || player.name || 'Player')}
+                          </h2>
+                          {player.city && (
+                            <p className="find__player-city">{player.city}</p>
+                          )}
+                        </div>
+                        <button type="button" className="find__invite-btn">
+                          Invite to Play
+                        </button>
                       </div>
-                      <button type="button" className="find__invite-btn">
-                        Invite to Play
-                      </button>
-                    </div>
-                    <div className="find__player-sports">
-                      {player.sports.map((sport) => (
-                        <span key={sport} className="find__sport-pill">
-                          {sport}
-                        </span>
-                      ))}
-                    </div>
-                    <p className="find__player-sessions">
-                      {player.sessionsPlayed} sessions
-                    </p>
-                  </article>
-                ))}
+                      {Array.isArray(player.sports) && player.sports.length > 0 && (
+                        <div className="find__player-sports">
+                          {player.sports.map((sport) => (
+                            <span key={sport} className="find__sport-pill">
+                              {sport}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  ));
+                })()}
               </div>
             </div>
                 </div>
