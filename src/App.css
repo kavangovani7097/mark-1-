@@ -3192,12 +3192,24 @@ gmp-place-autocomplete {
   text-align: center;
 }
 
-.intro__icon {
-  display: block;
-  width: 64px;
-  height: 64px;
+.intro__icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
   margin-bottom: 2rem;
   flex-shrink: 0;
+}
+
+.intro__icon {
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.intro__icon--group {
+  height: 72px;
 }
 
 .intro__headline {

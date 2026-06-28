@@ -6,7 +6,7 @@ const SLIDES = [
   {
     icon: 'lightning',
     headline: 'Find Players Instantly',
-    subtitle: 'Real-time matching. Like Uber, but for sports.',
+    subtitle: 'Real-time matching for sports.',
   },
   {
     icon: 'calendar',
@@ -23,9 +23,6 @@ const SLIDES = [
 function IntroIcon({ type }) {
   const svgProps = {
     className: 'intro__icon',
-    width: 64,
-    height: 64,
-    viewBox: '0 0 24 24',
     fill: 'none',
     stroke: WINE,
     strokeWidth: 1.75,
@@ -36,29 +33,41 @@ function IntroIcon({ type }) {
 
   if (type === 'lightning') {
     return (
-      <svg {...svgProps}>
-        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
-      </svg>
+      <div className="intro__icon-wrap">
+        <svg {...svgProps} width={64} height={64} viewBox="0 0 24 24">
+          <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+        </svg>
+      </div>
     );
   }
 
   if (type === 'calendar') {
     return (
-      <svg {...svgProps}>
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <path d="M16 2v4M8 2v4M3 10h18" />
-        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
-      </svg>
+      <div className="intro__icon-wrap">
+        <svg {...svgProps} width={64} height={64} viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
+          <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+        </svg>
+      </div>
     );
   }
 
   return (
-    <svg {...svgProps}>
-      <circle cx="9" cy="7" r="3.25" />
-      <circle cx="17" cy="8" r="2.5" />
-      <path d="M4 20c0-3.3 2.7-6 5-6s5 2.7 5 6" />
-      <path d="M14.5 20c0-2.2 1.8-4 4-4" />
-    </svg>
+    <div className="intro__icon-wrap">
+      <svg
+        {...svgProps}
+        className="intro__icon intro__icon--group"
+        width={64}
+        height={72}
+        viewBox="0 0 24 26"
+      >
+        <circle cx="9" cy="7" r="3.25" />
+        <circle cx="17" cy="8" r="2.5" />
+        <path d="M3.5 21.5c0-3.3 2.7-6 5.5-6s5.5 2.7 5.5 6" />
+        <path d="M14 21.5c0-2.2 1.8-4 4-4" />
+      </svg>
+    </div>
   );
 }
 
