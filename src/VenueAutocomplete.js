@@ -58,6 +58,7 @@ function VenueAutocomplete({
   value,
   onVenueChange,
   onAddressChange,
+  onCoordsChange,
   placeholder = 'Where are you playing?',
 }) {
   const inputRef = useRef(null);
@@ -73,7 +74,7 @@ function VenueAutocomplete({
         const autocomplete = new window.google.maps.places.Autocomplete(
           inputRef.current,
           {
-            fields: ['name', 'formatted_address'],
+            fields: ['name', 'formatted_address', 'geometry'],
             componentRestrictions: { country: 'in' },
           }
         );
@@ -82,6 +83,14 @@ function VenueAutocomplete({
           const place = autocomplete.getPlace();
           onVenueChange(place.name || inputRef.current?.value || '');
           onAddressChange(place.formatted_address || '');
+
+          const location = place.geometry?.location;
+          if (location && onCoordsChange) {
+            onCoordsChange({
+              lat: location.lat(),
+              lng: location.lng(),
+            });
+          }
         });
 
         autocompleteRef.current = autocomplete;
@@ -99,7 +108,7 @@ function VenueAutocomplete({
         autocompleteRef.current = null;
       }
     };
-  }, [onVenueChange, onAddressChange]);
+  }, [onVenueChange, onAddressChange, onCoordsChange]);
 
   useEffect(() => {
     if (!value && inputRef.current) {
@@ -110,6 +119,9 @@ function VenueAutocomplete({
   const handleInput = (event) => {
     onVenueChange(event.target.value);
     onAddressChange('');
+    if (onCoordsChange) {
+      onCoordsChange(null);
+    }
   };
 
   return (

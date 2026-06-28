@@ -21,7 +21,7 @@ export function generateSquadrId() {
   return `SQUADR#${suffix}`;
 }
 
-export async function upsertUser({ name, squadrId, city, sports }) {
+export async function upsertUser({ name, squadrId, city, sports, lat, lng }) {
   await fetch(`${restUrl('users')}?on_conflict=squadr_id`, {
     method: 'POST',
     headers: restHeaders({ Prefer: 'resolution=merge-duplicates' }),
@@ -30,6 +30,7 @@ export async function upsertUser({ name, squadrId, city, sports }) {
       squadr_id: squadrId,
       city,
       sports,
+      ...(lat != null && lng != null ? { lat, lng } : {}),
     }),
   });
 }

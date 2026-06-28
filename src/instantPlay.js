@@ -1,6 +1,57 @@
 import { supabaseUrl, supabaseAnonKey } from './supabase';
 
 const REQUEST_TTL_MS = 15 * 60 * 1000;
+const GOOGLE_GEOCODING_KEY = 'AIzaSyA0Sr7npoE5MGMk9LzA4CWFGL-c-foQ30s';
+
+export function haversineDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export async function reverseGeocode(lat, lng) {
+  const params = new URLSearchParams({
+    latlng: `${lat},${lng}`,
+    key: GOOGLE_GEOCODING_KEY,
+  });
+
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?${params}`
+  );
+  const data = await response.json();
+
+  if (data.status !== 'OK' || !data.results?.length) {
+    return 'Nearby area';
+  }
+
+  const components = data.results[0].address_components || [];
+  const findType = (type) =>
+    components.find((part) => part.types.includes(type))?.long_name;
+
+  return (
+    findType('neighborhood') ||
+    findType('sublocality') ||
+    findType('locality') ||
+    data.results[0].formatted_address?.split(',')[0] ||
+    'Nearby area'
+  );
+}
+
+export async function updateUserLocation({ squadrId, lat, lng }) {
+  if (!squadrId) return;
+
+  await fetch(`${restUrl('users')}?squadr_id=eq.${squadrId}`, {
+    method: 'PATCH',
+    headers: restHeaders(),
+    body: JSON.stringify({ lat, lng }),
+  });
+}
 
 const restHeaders = (extra = {}) => ({
   apikey: supabaseAnonKey,
@@ -18,6 +69,9 @@ export async function createInstantRequest({
   playersNeeded,
   locationPref,
   requesterName,
+  lat,
+  lng,
+  radiusKm,
 }) {
   const expiresAt = new Date(Date.now() + REQUEST_TTL_MS).toISOString();
 
@@ -29,6 +83,9 @@ export async function createInstantRequest({
       players_needed: playersNeeded,
       location_pref: locationPref,
       requester_name: requesterName,
+      lat,
+      lng,
+      radius_km: radiusKm,
       status: 'searching',
       expires_at: expiresAt,
     }),

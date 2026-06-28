@@ -11,10 +11,13 @@ import {
   fetchMyParticipations,
   fetchMyRatings,
   fetchOpenRequests,
+  haversineDistance,
   joinSession,
+  reverseGeocode,
   sendMessage,
   submitRating,
   updateRequestStatus,
+  updateUserLocation,
 } from './instantPlay';
 import {
   createSessionInvites,
@@ -376,6 +379,15 @@ function App() {
   const [instantSport, setInstantSport] = useState('');
   const [instantPlayersNeeded, setInstantPlayersNeeded] = useState(null);
   const [instantLocationPref, setInstantLocationPref] = useState('');
+  const [instantLocationMode, setInstantLocationMode] = useState(null);
+  const [instantLocationLabel, setInstantLocationLabel] = useState('');
+  const [userLat, setUserLat] = useState(null);
+  const [userLng, setUserLng] = useState(null);
+  const [radiusKm, setRadiusKm] = useState(10);
+  const [instantLocationLoading, setInstantLocationLoading] = useState(false);
+  const [instantLocationError, setInstantLocationError] = useState('');
+  const [openToPlayLat, setOpenToPlayLat] = useState(null);
+  const [openToPlayLng, setOpenToPlayLng] = useState(null);
   const [activeRequestId, setActiveRequestId] = useState(null);
   const [isRequester, setIsRequester] = useState(false);
   const [activeRequesterName, setActiveRequesterName] = useState('');
@@ -1309,6 +1321,13 @@ function App() {
     setInstantSport('');
     setInstantPlayersNeeded(null);
     setInstantLocationPref('');
+    setInstantLocationMode(null);
+    setInstantLocationLabel('');
+    setUserLat(null);
+    setUserLng(null);
+    setRadiusKm(10);
+    setInstantLocationLoading(false);
+    setInstantLocationError('');
     setActiveRequestId(null);
     setIsRequester(false);
     setActiveRequesterName('');
@@ -1335,6 +1354,79 @@ function App() {
       return;
     }
     resetInstantFlow();
+    setStep('instantLocation');
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setInstantLocationError('Geolocation is not supported on this device.');
+      return;
+    }
+
+    setInstantLocationMode('current');
+    setInstantLocationLoading(true);
+    setInstantLocationError('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        try {
+          const areaName = await reverseGeocode(lat, lng);
+          setUserLat(lat);
+          setUserLng(lng);
+          setInstantLocationLabel(areaName);
+          setInstantLocationPref(areaName);
+        } catch {
+          setUserLat(lat);
+          setUserLng(lng);
+          setInstantLocationLabel('Nearby area');
+          setInstantLocationPref('Nearby area');
+        } finally {
+          setInstantLocationLoading(false);
+        }
+      },
+      () => {
+        setInstantLocationLoading(false);
+        setInstantLocationError('Could not get your location. Try setting it manually.');
+        setInstantLocationMode(null);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  const handleSelectManualLocation = () => {
+    setInstantLocationMode('manual');
+    setInstantLocationError('');
+    setInstantLocationLabel('');
+    setInstantLocationPref('');
+    setUserLat(null);
+    setUserLng(null);
+  };
+
+  const handleManualVenueChange = (val) => {
+    setInstantLocationPref(val);
+    setInstantLocationLabel(val);
+    if (!val.trim()) {
+      setUserLat(null);
+      setUserLng(null);
+    }
+  };
+
+  const handleManualCoordsChange = (coords) => {
+    if (!coords) {
+      setUserLat(null);
+      setUserLng(null);
+      return;
+    }
+
+    setUserLat(coords.lat);
+    setUserLng(coords.lng);
+  };
+
+  const handleInstantLocationContinue = () => {
+    if (userLat == null || userLng == null) return;
     setStep('instantSport');
   };
 
@@ -1369,12 +1461,53 @@ function App() {
 
   const handleInstantSelectSport = (sport) => {
     setInstantSport(sport);
+    setStep('instantRadius');
+  };
+
+  const handleInstantRadiusContinue = () => {
     setStep('instantCount');
   };
 
   const handleInstantSelectCount = (count) => {
     setInstantPlayersNeeded(count);
-    setStep('instantLocation');
+    setStep('instantBroadcast');
+  };
+
+  const handleOpenToPlayToggle = () => {
+    const next = !openToPlay;
+
+    if (!next) {
+      setOpenToPlay(false);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      showToast('Geolocation is not supported on this device.', 'error');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setOpenToPlayLat(lat);
+        setOpenToPlayLng(lng);
+        setOpenToPlay(true);
+
+        if (squadrId) {
+          try {
+            await updateUserLocation({ squadrId, lat, lng });
+          } catch {
+            // ignore — polling still uses local coords
+          }
+        }
+      },
+      () => {
+        showToast('Could not get your location for Open to Play.', 'error');
+        setOpenToPlay(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
   };
 
   const proceedBroadcast = useCallback(async () => {
@@ -1384,8 +1517,11 @@ function App() {
       const request = await createInstantRequest({
         sport: instantSport,
         playersNeeded: instantPlayersNeeded,
-        locationPref: instantLocationPref,
+        locationPref: instantLocationLabel || instantLocationPref,
         requesterName: firstName,
+        lat: userLat,
+        lng: userLng,
+        radiusKm,
       });
 
       if (!request?.id) {
@@ -1404,7 +1540,16 @@ function App() {
     } catch {
       setInstantError('Could not start search. Please try again.');
     }
-  }, [instantSport, instantPlayersNeeded, instantLocationPref, firstName]);
+  }, [
+    instantSport,
+    instantPlayersNeeded,
+    instantLocationPref,
+    instantLocationLabel,
+    userLat,
+    userLng,
+    radiusKm,
+    firstName,
+  ]);
 
   const handleBroadcastRequest = async (e) => {
     e.preventDefault();
@@ -1533,16 +1678,40 @@ function App() {
         const requests = await fetchOpenRequests();
         if (!active) return;
 
-        const match = requests.find(
-          (request) =>
-            request.requester_name !== firstName &&
-            (!request.sport || selectedSports.includes(request.sport)) &&
-            request.id !== activeRequestId &&
-            !dismissedRequestIds.includes(request.id)
-        );
+        const match = requests.find((request) => {
+          if (request.requester_name === firstName) return false;
+          if (request.sport && !selectedSports.includes(request.sport)) return false;
+          if (request.id === activeRequestId) return false;
+          if (dismissedRequestIds.includes(request.id)) return false;
+          if (
+            request.lat == null ||
+            request.lng == null ||
+            openToPlayLat == null ||
+            openToPlayLng == null
+          ) {
+            return false;
+          }
+
+          const distance = haversineDistance(
+            openToPlayLat,
+            openToPlayLng,
+            request.lat,
+            request.lng
+          );
+          const maxRadius = request.radius_km ?? 10;
+          return distance <= maxRadius;
+        });
 
         if (match) {
-          setIncomingRequest((prev) => prev ?? match);
+          const distanceKm = haversineDistance(
+            openToPlayLat,
+            openToPlayLng,
+            match.lat,
+            match.lng
+          );
+          setIncomingRequest((prev) =>
+            prev ?? { ...match, distanceKm }
+          );
         }
       } catch {
         // ignore polling errors
@@ -1557,6 +1726,8 @@ function App() {
     };
   }, [
     openToPlay,
+    openToPlayLat,
+    openToPlayLng,
     isPro,
     step,
     firstName,
@@ -2603,7 +2774,10 @@ function App() {
     );
   }
 
-  if (step === 'instantSport') {
+  if (step === 'instantLocation') {
+    const locationReady =
+      userLat != null && userLng != null && !instantLocationLoading;
+
     return (
       <div className="create">
         <header className="create__header">
@@ -2632,7 +2806,117 @@ function App() {
         </header>
 
         <main className="create__main">
-          <p className="instant__step">Step 1 of 3</p>
+          <p className="instant__step">Step 1 of 5</p>
+          <h2 className="instant__question">Where are you playing?</h2>
+
+          <div className="instant__location-cards">
+            <button
+              type="button"
+              className={`instant__location-card${
+                instantLocationMode === 'current'
+                  ? ' instant__location-card--selected'
+                  : ''
+              }`}
+              onClick={handleUseCurrentLocation}
+              disabled={instantLocationLoading}
+            >
+              <span className="instant__location-card-icon" aria-hidden="true">
+                📍
+              </span>
+              <span className="instant__location-card-title">Use Current Location</span>
+              {instantLocationMode === 'current' && instantLocationLoading && (
+                <span className="instant__location-status">Finding location...</span>
+              )}
+              {instantLocationMode === 'current' &&
+                !instantLocationLoading &&
+                locationReady && (
+                  <span className="instant__location-status instant__location-status--success">
+                    {instantLocationLabel} ✓
+                  </span>
+                )}
+            </button>
+
+            <button
+              type="button"
+              className={`instant__location-card${
+                instantLocationMode === 'manual'
+                  ? ' instant__location-card--selected'
+                  : ''
+              }`}
+              onClick={handleSelectManualLocation}
+            >
+              <span className="instant__location-card-icon" aria-hidden="true">
+                🔍
+              </span>
+              <span className="instant__location-card-title">Set Manually</span>
+            </button>
+          </div>
+
+          {instantLocationMode === 'manual' && (
+            <div className="instant__manual-location">
+              <VenueAutocomplete
+                value={instantLocationPref}
+                onVenueChange={handleManualVenueChange}
+                onAddressChange={(address) => {
+                  if (address) {
+                    setInstantLocationLabel(instantLocationPref || address);
+                  }
+                }}
+                onCoordsChange={handleManualCoordsChange}
+                placeholder="Search for a venue or area"
+              />
+              {locationReady && (
+                <p className="instant__location-status instant__location-status--success">
+                  {instantLocationLabel || instantLocationPref} ✓
+                </p>
+              )}
+            </div>
+          )}
+
+          {instantLocationError && (
+            <p className="login__error">{instantLocationError}</p>
+          )}
+
+          <button
+            type="button"
+            className="login__button create__submit"
+            disabled={!locationReady}
+            onClick={handleInstantLocationContinue}
+          >
+            Continue
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 'instantSport') {
+    return (
+      <div className="create">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={() => setStep('instantLocation')}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="create__title">Find Players</h1>
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="create__main">
+          <p className="instant__step">Step 2 of 5</p>
           <h2 className="instant__question">What do you want to play?</h2>
           <div className="login__sports-grid create__sports-grid">
             {instantSportOptions.map((name) => {
@@ -2656,7 +2940,7 @@ function App() {
     );
   }
 
-  if (step === 'instantCount') {
+  if (step === 'instantRadius') {
     return (
       <div className="create">
         <header className="create__header">
@@ -2682,7 +2966,64 @@ function App() {
         </header>
 
         <main className="create__main">
-          <p className="instant__step">Step 2 of 3</p>
+          <p className="instant__step">Step 3 of 5</p>
+          <h2 className="instant__question">How far should we search?</h2>
+          <div className="instant__radius">
+            <p className="instant__radius-value">{radiusKm} km radius</p>
+            <input
+              type="range"
+              className="instant__radius-slider"
+              min="5"
+              max="40"
+              step="1"
+              value={radiusKm}
+              onChange={(e) => setRadiusKm(Number(e.target.value))}
+              aria-label="Search radius in kilometers"
+            />
+            <div className="instant__radius-labels">
+              <span>5 km</span>
+              <span>40 km</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="login__button create__submit"
+            onClick={handleInstantRadiusContinue}
+          >
+            Continue
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 'instantCount') {
+    return (
+      <div className="create">
+        <header className="create__header">
+          <button
+            type="button"
+            className="create__back"
+            onClick={() => setStep('instantRadius')}
+            aria-label="Go back"
+          >
+            <svg
+              className="create__back-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <h1 className="create__title">Find Players</h1>
+          <span className="create__header-spacer" aria-hidden="true" />
+        </header>
+
+        <main className="create__main">
+          <p className="instant__step">Step 4 of 5</p>
           <h2 className="instant__question">How many players do you need?</h2>
           <div className="instant__count-grid">
             {PLAYER_COUNT_OPTIONS.map((count) => {
@@ -2705,7 +3046,7 @@ function App() {
     );
   }
 
-  if (step === 'instantLocation') {
+  if (step === 'instantBroadcast') {
     return (
       <div className="create">
         <header className="create__header">
@@ -2733,18 +3074,16 @@ function App() {
         <main className="create__main">
           <form className="create__form" onSubmit={handleBroadcastRequest}>
             <section className="create__section">
-              <p className="instant__step">Step 3 of 3</p>
-              <h2 className="instant__question">Where do you want to play?</h2>
-              <VenueAutocomplete
-                value={instantLocationPref}
-                onVenueChange={(val) => setInstantLocationPref(val)}
-                onAddressChange={() => {}}
-                placeholder="Where do you want to play?"
-              />
+              <p className="instant__step">Step 5 of 5</p>
+              <h2 className="instant__question">Ready to broadcast?</h2>
+              <p className="instant__broadcast-location">
+                {instantLocationLabel || instantLocationPref}
+              </p>
             </section>
 
             <div className="instant__summary">
               <span className="instant__summary-item">{instantSport}</span>
+              <span className="instant__summary-item">{radiusKm} km radius</span>
               <span className="instant__summary-item">
                 {instantPlayersNeeded} player
                 {instantPlayersNeeded === 1 ? '' : 's'}
@@ -2754,7 +3093,7 @@ function App() {
             <button
               type="submit"
               className="login__button create__submit"
-              disabled={!instantLocationPref.trim()}
+              disabled={userLat == null || userLng == null}
             >
               Broadcast Request
             </button>
@@ -2772,7 +3111,7 @@ function App() {
           <button
             type="button"
             className="create__back"
-            onClick={() => setStep('instantLocation')}
+            onClick={() => setStep('instantBroadcast')}
             aria-label="Go back"
           >
             <svg
@@ -2845,7 +3184,8 @@ function App() {
 
           <h1 className="instant-search__title">Searching...</h1>
           <p className="instant-search__subtitle">
-            Looking for {instantSport} players near {instantLocationPref}
+            Looking for {instantSport} players within {radiusKm} km of{' '}
+            {instantLocationLabel || instantLocationPref}
           </p>
 
           <div className="instant-search__counter-wrap">
@@ -3108,7 +3448,7 @@ function App() {
             <button
               type="button"
               className={`home__toggle${openToPlay ? ' home__toggle--on' : ''}`}
-              onClick={() => setOpenToPlay((prev) => !prev)}
+              onClick={handleOpenToPlayToggle}
               aria-pressed={openToPlay}
               aria-label="Open to Play"
             >
@@ -3405,6 +3745,11 @@ function App() {
                 {capitalize(incomingRequest.requester_name)}
               </h2>
               <p className="incoming__sport">{incomingRequest.sport}</p>
+              {incomingRequest.distanceKm != null && (
+                <p className="incoming__distance">
+                  📍 {incomingRequest.distanceKm.toFixed(1)} km away
+                </p>
+              )}
               {incomingRequest.location_pref && (
                 <p className="incoming__location">
                   {incomingRequest.location_pref}
