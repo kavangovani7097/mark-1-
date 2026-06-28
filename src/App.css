@@ -3192,10 +3192,12 @@ gmp-place-autocomplete {
   text-align: center;
 }
 
-.intro__emoji {
-  font-size: 4.5rem;
-  line-height: 1;
+.intro__icon {
+  display: block;
+  width: 64px;
+  height: 64px;
   margin-bottom: 2rem;
+  flex-shrink: 0;
 }
 
 .intro__headline {
@@ -3282,9 +3284,21 @@ gmp-place-autocomplete {
 }
 
 .toast-premium__icon {
-  font-size: 1.125rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
   flex-shrink: 0;
+  color: var(--squadr-accent);
+}
+
+.toast-premium--error .toast-premium__icon {
+  color: #ff4444;
+}
+
+.toast-premium--info .toast-premium__icon {
+  color: var(--squadr-text-secondary);
 }
 
 .toast-premium__message {
