@@ -3533,7 +3533,11 @@ gmp-place-autocomplete {
 }
 
 .bottom-nav__icon {
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
   line-height: 1;
 }
 

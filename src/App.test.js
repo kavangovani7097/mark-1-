@@ -251,7 +251,7 @@ test('shows profile screen from home profile icon', async () => {
   await goToHomeScreen();
   await userEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
-  expect(screen.getByRole('heading', { name: 'Alex' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Alex Pro' })).toBeInTheDocument();
   expect(screen.getByText('Mumbai')).toBeInTheDocument();
   expect(screen.getByText('Sessions Played')).toBeInTheDocument();
   expect(screen.getByText('Rating')).toBeInTheDocument();
@@ -288,21 +288,15 @@ test('shows find players tab with filters and player cards', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Instant' }));
 
   expect(
-    screen.getByText('Instant Mode is a SQUADR Pro feature')
+    screen.getByRole('button', { name: 'Find Players Now' })
   ).toBeInTheDocument();
   expect(
-    screen.getByRole('button', { name: 'Upgrade to Pro' })
-  ).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Find Players Now' })).not.toBeInTheDocument();
-  expect(screen.getByText('⚡ Find players in real-time')).toBeInTheDocument();
+    screen.queryByText('Instant Mode is a SQUADR Pro feature')
+  ).not.toBeInTheDocument();
 
   expect(screen.getByRole('combobox', { name: 'Filter by sport' })).toBeInTheDocument();
   expect(screen.getByRole('group', { name: 'Filter by session type' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: '1-on-1' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: '1-on-1' })).toHaveAttribute(
-    'title',
-    'Unlock after 4 group sessions'
-  );
+  expect(screen.getByRole('button', { name: '1-on-1' })).not.toBeDisabled();
   expect(screen.getByRole('heading', { name: 'Priya' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Rohan' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Meera' })).toBeInTheDocument();

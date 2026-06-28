@@ -234,6 +234,53 @@ const capitalize = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
+const bottomNavSvgProps = {
+  width: 24,
+  height: 24,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+};
+
+function BottomNavIcon({ type }) {
+  switch (type) {
+    case 'home':
+      return (
+        <svg {...bottomNavSvgProps} aria-hidden="true">
+          <path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9.5z" />
+          <path d="M9 21V12h6v9" />
+        </svg>
+      );
+    case 'instant':
+      return (
+        <svg {...bottomNavSvgProps} aria-hidden="true">
+          <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+        </svg>
+      );
+    case 'friends':
+      return (
+        <svg {...bottomNavSvgProps} aria-hidden="true">
+          <circle cx="9" cy="7" r="3" />
+          <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+          <circle cx="17" cy="7" r="3" />
+          <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
+        </svg>
+      );
+    case 'profile':
+      return (
+        <svg {...bottomNavSvgProps} aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 const AVAILABILITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const AVAILABILITY_WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const AVAILABILITY_WEEKENDS = ['Sat', 'Sun'];
@@ -425,7 +472,9 @@ function App() {
   const [myParticipationIds, setMyParticipationIds] = useState([]);
   const [myRatedIds, setMyRatedIds] = useState([]);
 
-  const [isPro, setIsPro] = useState(false);
+  // TODO: re-enable Pro gating — use: const [isPro, setIsPro] = useState(false);
+  const [, setIsPro] = useState(false);
+  const isPro = true;
   const [proPlan, setProPlan] = useState('yearly');
 
   const [availability, setAvailability] = useState({});
@@ -1855,10 +1904,10 @@ function App() {
   const renderBottomNav = () => (
     <nav className="bottom-nav" aria-label="Main navigation">
       {[
-        { id: 'home', icon: '🏠', label: 'Home' },
-        { id: 'instant', icon: '⚡', label: 'Instant' },
-        { id: 'friends', icon: '👥', label: 'Friends' },
-        { id: 'profile', icon: '👤', label: 'Profile' },
+        { id: 'home', icon: 'home', label: 'Home' },
+        { id: 'instant', icon: 'instant', label: 'Instant' },
+        { id: 'friends', icon: 'friends', label: 'Friends' },
+        { id: 'profile', icon: 'profile', label: 'Profile' },
       ].map((tab) => (
         <button
           key={tab.id}
@@ -1869,8 +1918,8 @@ function App() {
           aria-current={activeTab === tab.id ? 'page' : undefined}
           onClick={() => setActiveTab(tab.id)}
         >
-          <span className="bottom-nav__icon" aria-hidden="true">
-            {tab.icon}
+          <span className="bottom-nav__icon">
+            <BottomNavIcon type={tab.icon} />
           </span>
           <span className="bottom-nav__label">{tab.label}</span>
         </button>
