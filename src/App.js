@@ -37,6 +37,23 @@ import Toast from './Toast';
 import './App.css';
 
 const ONBOARDING_SEEN_KEY = 'squadr_onboarding_seen';
+const PWA_INSTALLED_KEY = 'squadr_pwa_installed';
+const PWA_ANDROID_DISMISSED_KEY = 'squadr_pwa_prompt_dismissed';
+const PWA_IOS_DISMISSED_KEY = 'squadr_ios_prompt_dismissed';
+
+const isStandalonePwa = () =>
+  (typeof window.matchMedia === 'function' &&
+    window.matchMedia('(display-mode: standalone)').matches) ||
+  window.navigator.standalone === true;
+
+const isIosSafari = () => {
+  const { userAgent, platform, maxTouchPoints } = window.navigator;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(userAgent) ||
+    (platform === 'MacIntel' && maxTouchPoints > 1);
+  if (!isIOS) return false;
+  return !/CriOS|FxiOS|EdgiOS|OPiOS/.test(userAgent);
+};
 const SPLASH_MS = process.env.NODE_ENV === 'test' ? 0 : 1500;
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
@@ -467,6 +484,12 @@ function App() {
   const closedRequestRef = useRef(false);
   const postSplashRouteRef = useRef('login');
   const stepRef = useRef(step);
+  const deferredPromptRef = useRef(null);
+
+  const [canAndroidInstall, setCanAndroidInstall] = useState(false);
+  const [showAndroidInstallBanner, setShowAndroidInstallBanner] = useState(false);
+  const [showIosInstallBanner, setShowIosInstallBanner] = useState(false);
+  const [pwaBannerVisible, setPwaBannerVisible] = useState(false);
 
   useEffect(() => {
     stepRef.current = step;
@@ -475,6 +498,63 @@ function App() {
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
   }, []);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event) => {
+      event.preventDefault();
+      deferredPromptRef.current = event;
+      setCanAndroidInstall(true);
+    };
+
+    const handleAppInstalled = () => {
+      localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+      deferredPromptRef.current = null;
+      setCanAndroidInstall(false);
+      setShowAndroidInstallBanner(false);
+      setPwaBannerVisible(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (step !== 'home') {
+      setPwaBannerVisible(false);
+      return undefined;
+    }
+
+    if (isStandalonePwa()) return undefined;
+    if (localStorage.getItem(PWA_INSTALLED_KEY) === 'true') return undefined;
+
+    const androidEligible =
+      canAndroidInstall &&
+      localStorage.getItem(PWA_ANDROID_DISMISSED_KEY) !== 'true';
+    const iosEligible =
+      !androidEligible &&
+      isIosSafari() &&
+      localStorage.getItem(PWA_IOS_DISMISSED_KEY) !== 'true';
+
+    if (!androidEligible && !iosEligible) {
+      setShowAndroidInstallBanner(false);
+      setShowIosInstallBanner(false);
+      return undefined;
+    }
+
+    setShowAndroidInstallBanner(androidEligible);
+    setShowIosInstallBanner(iosEligible);
+
+    const timer = window.setTimeout(() => setPwaBannerVisible(true), 2000);
+    return () => {
+      window.clearTimeout(timer);
+      setPwaBannerVisible(false);
+    };
+  }, [step, canAndroidInstall]);
 
   useEffect(() => {
     const storedPic = loadStoredProfilePic();
@@ -1894,6 +1974,121 @@ function App() {
     />
   ) : null;
 
+  const hidePwaInstallBanner = useCallback(() => {
+    setPwaBannerVisible(false);
+    setShowAndroidInstallBanner(false);
+    setShowIosInstallBanner(false);
+  }, []);
+
+  const handleDismissAndroidInstall = useCallback(() => {
+    localStorage.setItem(PWA_ANDROID_DISMISSED_KEY, 'true');
+    hidePwaInstallBanner();
+  }, [hidePwaInstallBanner]);
+
+  const handleDismissIosInstall = useCallback(() => {
+    localStorage.setItem(PWA_IOS_DISMISSED_KEY, 'true');
+    hidePwaInstallBanner();
+  }, [hidePwaInstallBanner]);
+
+  const handleAndroidInstall = useCallback(async () => {
+    const prompt = deferredPromptRef.current;
+    if (!prompt) return;
+
+    try {
+      await prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === 'accepted') {
+        localStorage.setItem(PWA_INSTALLED_KEY, 'true');
+      }
+    } catch {
+      // ignore — user may have cancelled
+    } finally {
+      deferredPromptRef.current = null;
+      setCanAndroidInstall(false);
+      hidePwaInstallBanner();
+    }
+  }, [hidePwaInstallBanner]);
+
+  const renderPwaInstallBanner = () => {
+    if (!pwaBannerVisible) return null;
+
+    if (showAndroidInstallBanner) {
+      return (
+        <div
+          className="pwa-install pwa-install--android pwa-install--visible"
+          role="dialog"
+          aria-label="Install SQUADR app"
+        >
+          <button
+            type="button"
+            className="pwa-install__dismiss"
+            onClick={handleDismissAndroidInstall}
+            aria-label="Dismiss install prompt"
+          >
+            ×
+          </button>
+          <p className="pwa-install__text">
+            Add SQUADR to your Home Screen for the best experience
+          </p>
+          <button
+            type="button"
+            className="pwa-install__action"
+            onClick={handleAndroidInstall}
+          >
+            Install App
+          </button>
+        </div>
+      );
+    }
+
+    if (showIosInstallBanner) {
+      return (
+        <div
+          className="pwa-install pwa-install--ios pwa-install--visible"
+          role="dialog"
+          aria-label="Install SQUADR on your home screen"
+        >
+          <button
+            type="button"
+            className="pwa-install__dismiss"
+            onClick={handleDismissIosInstall}
+            aria-label="Dismiss install prompt"
+          >
+            ×
+          </button>
+          <div className="pwa-install__ios-header">
+            <img
+              src={`${process.env.PUBLIC_URL}/logo192.png`}
+              alt=""
+              className="pwa-install__icon"
+              width={40}
+              height={40}
+            />
+            <span className="pwa-install__ios-title">Install SQUADR</span>
+          </div>
+          <p className="pwa-install__ios-steps">
+            Tap Share → then &apos;Add to Home Screen&apos;
+          </p>
+          <svg
+            className="pwa-install__arrow"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 5v14" />
+            <path d="m19 12-7 7-7-7" />
+          </svg>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const renderBottomNav = () => (
     <nav className="bottom-nav" aria-label="Main navigation">
       {[
@@ -2445,6 +2640,7 @@ function App() {
         )}
 
         {toastNode}
+        {renderPwaInstallBanner()}
         {renderBottomNav()}
       </div>
     );
@@ -2637,6 +2833,7 @@ function App() {
         )}
 
         {toastNode}
+        {renderPwaInstallBanner()}
         {renderBottomNav()}
       </div>
     );
@@ -3842,6 +4039,7 @@ function App() {
         )}
 
         {toastNode}
+        {renderPwaInstallBanner()}
         {renderBottomNav()}
       </div>
     );
