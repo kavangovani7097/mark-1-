@@ -56,16 +56,21 @@ function IntroIcon({ type }) {
   return (
     <div className="intro__icon-wrap">
       <svg
-        {...svgProps}
-        className="intro__icon intro__icon--group"
-        width={64}
-        height={72}
-        viewBox="0 0 24 26"
+        className="intro__icon"
+        width="64"
+        height="64"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#7B2D42"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
       >
-        <circle cx="9" cy="7" r="3.25" />
-        <circle cx="17" cy="8" r="2.5" />
-        <path d="M3.5 21.5c0-3.3 2.7-6 5.5-6s5.5 2.7 5.5 6" />
-        <path d="M14 21.5c0-2.2 1.8-4 4-4" />
+        <circle cx="9" cy="7" r="3" />
+        <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+        <circle cx="17" cy="7" r="3" />
+        <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
       </svg>
     </div>
   );

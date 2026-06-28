@@ -3208,10 +3208,6 @@ gmp-place-autocomplete {
   overflow: visible;
 }
 
-.intro__icon--group {
-  height: 72px;
-}
-
 .intro__headline {
   margin: 0 0 1rem;
   font-size: 1.75rem;
