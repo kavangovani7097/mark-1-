@@ -70,6 +70,7 @@ jest.mock('./supabase', () => ({
 
 beforeEach(() => {
   localStorage.clear();
+  localStorage.setItem('squadr_onboarding_seen', 'true');
   supabase.auth.signInWithOAuth.mockResolvedValue({ error: null });
   supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
   supabase.auth.onAuthStateChange.mockReturnValue({
@@ -130,6 +131,7 @@ beforeEach(() => {
 });
 
 async function sendOtp() {
+  await screen.findByPlaceholderText('Phone number');
   await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
   await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
   await screen.findByRole('button', { name: 'Verify' });
@@ -148,14 +150,14 @@ async function goToHomeScreen() {
   await userEvent.selectOptions(screen.getByRole('combobox'), 'Mumbai');
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  await screen.findByRole('button', { name: 'Scheduled Sessions' });
+  await screen.findByRole('button', { name: 'Home' });
   await screen.findByRole('heading', { name: 'Badminton' });
 }
 
-test('renders login page', () => {
+test('renders login page', async () => {
   render(<App />);
+  expect(await screen.findByText('Find your crew. Play your sport.')).toBeInTheDocument();
   expect(screen.getByRole('img', { name: 'Squadr' })).toBeInTheDocument();
-  expect(screen.getByText('Find your crew. Play your sport.')).toBeInTheDocument();
   expect(screen.getByPlaceholderText('Phone number')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Send OTP' })).toBeInTheDocument();
 });
@@ -211,8 +213,8 @@ test('shows home screen after completing onboarding', async () => {
   await goToHomeScreen();
 
   expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toHaveClass('home__tab--active');
-  expect(screen.getByRole('button', { name: 'Instant Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Home' })).toHaveClass('bottom-nav__item--active');
+  expect(screen.getByRole('button', { name: 'Instant' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Badminton' })).toBeInTheDocument();
   expect(screen.getAllByText('SMALL GROUP')).toHaveLength(2);
   expect(screen.getByText('1-ON-1')).toBeInTheDocument();
@@ -241,7 +243,7 @@ test('shows create session screen from home fab', async () => {
   expect(screen.getByPlaceholderText('Max players')).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
-  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
 });
 
 test('shows profile screen from home profile icon', async () => {
@@ -249,7 +251,6 @@ test('shows profile screen from home profile icon', async () => {
   await goToHomeScreen();
   await userEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
-  expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Alex' })).toBeInTheDocument();
   expect(screen.getByText('Mumbai')).toBeInTheDocument();
   expect(screen.getByText('Sessions Played')).toBeInTheDocument();
@@ -261,8 +262,8 @@ test('shows profile screen from home profile icon', async () => {
   ).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Edit Profile' })).toBeInTheDocument();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
-  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Home' }));
+  expect(screen.getByRole('button', { name: 'Home' })).toHaveClass('bottom-nav__item--active');
 });
 
 test('shows selected sports as pills on profile', async () => {
@@ -274,7 +275,7 @@ test('shows selected sports as pills on profile', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
   await userEvent.click(screen.getByRole('button', { name: 'Tennis' }));
   await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-  await screen.findByRole('button', { name: 'Scheduled Sessions' });
+  await screen.findByRole('button', { name: 'Home' });
   await userEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
   expect(screen.getByText('Tennis')).toBeInTheDocument();
@@ -284,7 +285,7 @@ test('shows find players tab with filters and player cards', async () => {
   render(<App />);
   await goToHomeScreen();
 
-  await userEvent.click(screen.getByRole('button', { name: 'Instant Sessions' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Instant' }));
 
   expect(
     screen.getByText('Instant Mode is a SQUADR Pro feature')
@@ -331,7 +332,7 @@ test('opens session detail when tapping a session card', async () => {
   expect(screen.getByRole('button', { name: 'Join Session' })).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole('button', { name: 'Go back' }));
-  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
 });
 
 test('does not open session detail when tapping join on card', async () => {
@@ -341,5 +342,5 @@ test('does not open session detail when tapping join on card', async () => {
   await userEvent.click(screen.getAllByRole('button', { name: 'Join' })[0]);
 
   expect(screen.queryByRole('button', { name: 'Join Session' })).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Scheduled Sessions' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
 });

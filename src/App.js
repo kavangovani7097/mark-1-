@@ -27,7 +27,13 @@ import {
   updateInviteStatus,
   upsertUser,
 } from './friends';
+import SplashScreen from './SplashScreen';
+import OnboardingSlides from './OnboardingSlides';
+import Toast from './Toast';
 import './App.css';
+
+const ONBOARDING_SEEN_KEY = 'squadr_onboarding_seen';
+const SPLASH_MS = process.env.NODE_ENV === 'test' ? 0 : 1500;
 
 const EMPTY_OTP = ['', '', '', '', '', ''];
 
@@ -341,7 +347,8 @@ function App() {
   const [email, setEmail] = useState('');
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [step, setStep] = useState('login');
+  const [step, setStep] = useState('splash');
+  const [splashExiting, setSplashExiting] = useState(false);
   const [otp, setOtp] = useState(EMPTY_OTP);
   const [firstName, setFirstName] = useState('');
   const [age, setAge] = useState('');
@@ -349,7 +356,7 @@ function App() {
   const [sports, setSports] = useState(DEFAULT_SPORTS);
   const [selectedSports, setSelectedSports] = useState([]);
   const [customSport, setCustomSport] = useState('');
-  const [activeTab, setActiveTab] = useState('live');
+  const [activeTab, setActiveTab] = useState('home');
   const [createSessionSport, setCreateSessionSport] = useState('');
   const [createSessionType, setCreateSessionType] = useState('');
   const [sessionDateTime, setSessionDateTime] = useState('');
@@ -400,7 +407,7 @@ function App() {
   const [addFriendSearched, setAddFriendSearched] = useState(false);
   const [addFriendStatus, setAddFriendStatus] = useState('');
 
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState(null);
   const [joinedSessionIds, setJoinedSessionIds] = useState([]);
   const [joiningSessionId, setJoiningSessionId] = useState(null);
   const [myParticipationIds, setMyParticipationIds] = useState([]);
@@ -415,6 +422,16 @@ function App() {
   const inputRefs = useRef([]);
   const fileInputRef = useRef(null);
   const closedRequestRef = useRef(false);
+  const postSplashRouteRef = useRef('login');
+  const stepRef = useRef(step);
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message, type });
+  }, []);
 
   useEffect(() => {
     const storedPic = loadStoredProfilePic();
@@ -433,26 +450,51 @@ function App() {
     if (stored.skillLevels) setSkillLevels(normalizeSkillLevels(stored.skillLevels));
   }, []);
 
-  const routeAfterAuth = useCallback(() => {
-    const stored = loadStoredProfile();
-    if (stored?.first_name) {
-      setFirstName(stored.first_name);
-      if (stored.age != null) setAge(String(stored.age));
-      if (stored.city) setCity(stored.city);
-      if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
-      if (stored.squadr_id) setSquadrId(stored.squadr_id);
-      if (stored.isPro) setIsPro(true);
-      if (stored.availability) {
-        setAvailability(normalizeAvailability(stored.availability));
-      }
-      if (stored.skillLevels) {
-        setSkillLevels(normalizeSkillLevels(stored.skillLevels));
-      }
-      setStep('home');
-    } else {
-      setStep('onboarding');
+  const hydrateProfileFromStorage = useCallback((stored) => {
+    if (stored.first_name) setFirstName(stored.first_name);
+    if (stored.age != null) setAge(String(stored.age));
+    if (stored.city) setCity(stored.city);
+    if (Array.isArray(stored.sports)) setSelectedSports(stored.sports);
+    if (stored.squadr_id) setSquadrId(stored.squadr_id);
+    if (stored.isPro) setIsPro(true);
+    if (stored.availability) {
+      setAvailability(normalizeAvailability(stored.availability));
+    }
+    if (stored.skillLevels) {
+      setSkillLevels(normalizeSkillLevels(stored.skillLevels));
     }
   }, []);
+
+  const getPostAuthStep = useCallback(() => {
+    const stored = loadStoredProfile();
+    if (stored?.first_name) {
+      hydrateProfileFromStorage(stored);
+      return 'home';
+    }
+    return 'onboarding';
+  }, [hydrateProfileFromStorage]);
+
+  const applyPostSplashRoute = useCallback(() => {
+    if (!localStorage.getItem(ONBOARDING_SEEN_KEY)) {
+      setStep('intro');
+      return;
+    }
+    setStep(postSplashRouteRef.current);
+  }, []);
+
+  const completeIntro = useCallback(() => {
+    localStorage.setItem(ONBOARDING_SEEN_KEY, 'true');
+    setStep(postSplashRouteRef.current);
+  }, []);
+
+  const routeAfterAuth = useCallback(() => {
+    const nextStep = getPostAuthStep();
+    if (stepRef.current === 'splash' || stepRef.current === 'intro') {
+      postSplashRouteRef.current = nextStep;
+      return;
+    }
+    setStep(nextStep);
+  }, [getPostAuthStep]);
 
   useEffect(() => {
     let active = true;
@@ -463,12 +505,19 @@ function App() {
         if (!active) return;
 
         if (data?.session) {
-          routeAfterAuth();
+          postSplashRouteRef.current = getPostAuthStep();
         } else {
-          setStep('login');
+          postSplashRouteRef.current = 'login';
+        }
+
+        if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
+          applyPostSplashRoute();
         }
       } catch {
-        if (active) setStep('login');
+        postSplashRouteRef.current = 'login';
+        if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
+          setStep('login');
+        }
       }
     };
 
@@ -476,7 +525,27 @@ function App() {
     return () => {
       active = false;
     };
-  }, [routeAfterAuth]);
+  }, [getPostAuthStep, applyPostSplashRoute]);
+
+  useEffect(() => {
+    if (step !== 'splash') return undefined;
+
+    if (SPLASH_MS === 0) {
+      applyPostSplashRoute();
+      return undefined;
+    }
+
+    const exitTimer = setTimeout(
+      () => setSplashExiting(true),
+      Math.max(SPLASH_MS - 300, 0)
+    );
+    const doneTimer = setTimeout(() => applyPostSplashRoute(), SPLASH_MS);
+
+    return () => {
+      clearTimeout(exitTimer);
+      clearTimeout(doneTimer);
+    };
+  }, [step, applyPostSplashRoute]);
 
   useEffect(() => {
     const { data } =
@@ -531,6 +600,13 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (step === 'profile') {
+      setActiveTab('profile');
+      setStep('home');
+    }
+  }, [step]);
+
+  useEffect(() => {
     if (step === 'home') {
       fetchSessions();
     }
@@ -581,12 +657,6 @@ function App() {
       active = false;
     };
   }, [step, firstName]);
-
-  useEffect(() => {
-    if (!toast) return undefined;
-    const timer = setTimeout(() => setToast(''), 2500);
-    return () => clearTimeout(timer);
-  }, [toast]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -790,11 +860,6 @@ function App() {
     setStep('createSession');
   };
 
-  const handleOpenProfile = () => {
-    setEditingProfile(false);
-    setStep('profile');
-  };
-
   const handleBackToHome = () => {
     setEditingProfile(false);
     setStep('home');
@@ -862,19 +927,23 @@ function App() {
   }, [squadrId]);
 
   useEffect(() => {
-    if ((step === 'profile' || step === 'createSession') && squadrId) {
-      loadFriendRequests();
+    if (
+      (step === 'home' &&
+        (activeTab === 'friends' || activeTab === 'profile')) ||
+      step === 'createSession'
+    ) {
+      if (squadrId) loadFriendRequests();
     }
-  }, [step, squadrId, loadFriendRequests]);
+  }, [step, activeTab, squadrId, loadFriendRequests]);
 
   const handleCopySquadrId = async () => {
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(squadrId);
       }
-      setToast('Copied!');
+      showToast('Copied!');
     } catch {
-      setToast('Could not copy');
+      showToast('Could not copy', 'error');
     }
   };
 
@@ -921,7 +990,7 @@ function App() {
         receiverSquadrId: addFriendResult.squadr_id,
         receiverName: addFriendResult.name,
       });
-      setToast('Request sent!');
+      showToast('Request sent!');
       handleCloseAddFriend();
       loadFriendRequests();
     } catch {
@@ -968,7 +1037,7 @@ function App() {
     setProfilePic(null);
     setEditingProfile(false);
     setShowDeleteConfirm(false);
-    setActiveTab('live');
+    setActiveTab('home');
     setSessions([]);
     setSelectedSessionId(null);
     setLoginError('');
@@ -978,7 +1047,7 @@ function App() {
     setJoinedSessionIds([]);
     setMyParticipationIds([]);
     setMyRatedIds([]);
-    setToast('');
+    setToast(null);
     setSquadrId('');
     setFriendsTab('friends');
     setFriendRequests([]);
@@ -1070,9 +1139,9 @@ function App() {
             : item
         )
       );
-      setToast("You've joined!");
+      showToast("You've joined!");
     } catch {
-      setToast('Could not join. Please try again.');
+      showToast('Could not join. Please try again.', 'error');
     } finally {
       setJoiningSessionId(null);
     }
@@ -1190,9 +1259,9 @@ function App() {
           )
         );
       }
-      setToast("You've joined!");
+      showToast("You've joined!");
     } catch {
-      setToast('Could not accept invite. Please try again.');
+      showToast('Could not accept invite. Please try again.', 'error');
     }
   };
 
@@ -1290,7 +1359,7 @@ function App() {
       skillLevels,
     });
 
-    setToast('Pro Activated!');
+    showToast('Pro Activated!');
     setStep('home');
   };
 
@@ -1604,6 +1673,58 @@ function App() {
   const instantSportOptions =
     selectedSports.length > 0 ? selectedSports : DEFAULT_SPORTS;
 
+  const toastNode = toast ? (
+    <Toast
+      message={toast.message}
+      type={toast.type}
+      onDismiss={() => setToast(null)}
+    />
+  ) : null;
+
+  const renderBottomNav = () => (
+    <nav className="bottom-nav" aria-label="Main navigation">
+      {[
+        { id: 'home', icon: '🏠', label: 'Home' },
+        { id: 'instant', icon: '⚡', label: 'Instant' },
+        { id: 'friends', icon: '👥', label: 'Friends' },
+        { id: 'profile', icon: '👤', label: 'Profile' },
+      ].map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          className={`bottom-nav__item${
+            activeTab === tab.id ? ' bottom-nav__item--active' : ''
+          }`}
+          aria-current={activeTab === tab.id ? 'page' : undefined}
+          onClick={() => setActiveTab(tab.id)}
+        >
+          <span className="bottom-nav__icon" aria-hidden="true">
+            {tab.icon}
+          </span>
+          <span className="bottom-nav__label">{tab.label}</span>
+        </button>
+      ))}
+    </nav>
+  );
+
+  if (step === 'splash') {
+    return (
+      <>
+        <SplashScreen exiting={splashExiting} />
+        {toastNode}
+      </>
+    );
+  }
+
+  if (step === 'intro') {
+    return (
+      <>
+        <OnboardingSlides onComplete={completeIntro} onSkip={completeIntro} />
+        {toastNode}
+      </>
+    );
+  }
+
   if (step === 'sessionDetail' && selectedSession) {
     return (
       <div className="session-detail">
@@ -1689,7 +1810,7 @@ function App() {
     );
   }
 
-  if (step === 'profile') {
+  if (step === 'home' && activeTab === 'profile') {
     const sessionsPlayedCount = sessions.filter(
       (session) => session.city && city && session.city === city
     ).length;
@@ -1701,17 +1822,6 @@ function App() {
           request.receiver_squadr_id === squadrId)
     );
 
-    const pendingIncoming = friendRequests.filter(
-      (request) =>
-        request.status === 'pending' &&
-        request.receiver_squadr_id === squadrId
-    );
-
-    const friendDisplayName = (request) =>
-      request.sender_squadr_id === squadrId
-        ? request.receiver_name
-        : request.sender_name;
-
     const availabilitySummary = formatAvailabilitySummary(availability);
     const profileRating = 0;
     const badgeContext = {
@@ -1721,25 +1831,9 @@ function App() {
     };
 
     return (
-      <div className="profile">
-        <header className="profile__header">
-          <button
-            type="button"
-            className="create__back"
-            onClick={handleBackToHome}
-            aria-label="Go back"
-          >
-            <svg
-              className="create__back-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
+      <div className="home home--with-nav">
+        <header className="home__header home__header--nav profile--tab profile__header">
+          <h1 className="profile__tab-title">Profile</h1>
           <button
             type="button"
             className="profile__logout"
@@ -2024,104 +2118,6 @@ function App() {
                 </p>
               </section>
 
-              <section className="profile__section">
-                <div className="profile__section-head">
-                  <h2 className="profile__section-title">Friends</h2>
-                  <button
-                    type="button"
-                    className="friends__add-btn"
-                    onClick={handleOpenAddFriend}
-                  >
-                    + Add Friend
-                  </button>
-                </div>
-
-                <div className="friends__tabs" role="tablist">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={friendsTab === 'friends'}
-                    className={`friends__tab${
-                      friendsTab === 'friends' ? ' friends__tab--active' : ''
-                    }`}
-                    onClick={() => setFriendsTab('friends')}
-                  >
-                    Friends
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={friendsTab === 'requests'}
-                    className={`friends__tab${
-                      friendsTab === 'requests' ? ' friends__tab--active' : ''
-                    }`}
-                    onClick={() => setFriendsTab('requests')}
-                  >
-                    Requests
-                    {pendingIncoming.length > 0 && (
-                      <span className="friends__badge">
-                        {pendingIncoming.length}
-                      </span>
-                    )}
-                  </button>
-                </div>
-
-                {friendsTab === 'friends' ? (
-                  acceptedFriends.length === 0 ? (
-                    <p className="profile__empty">
-                      No friends yet. Add someone by their SQUADR ID.
-                    </p>
-                  ) : (
-                    <div className="friends__list">
-                      {acceptedFriends.map((request) => {
-                        const name = friendDisplayName(request);
-                        return (
-                          <div key={request.id} className="friends__card">
-                            <div className="friends__avatar">
-                              {getInitials(name)}
-                            </div>
-                            <span className="friends__name">
-                              {capitalize(name)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )
-                ) : pendingIncoming.length === 0 ? (
-                  <p className="profile__empty">No pending requests</p>
-                ) : (
-                  <div className="friends__list">
-                    {pendingIncoming.map((request) => (
-                      <div key={request.id} className="friends__card">
-                        <div className="friends__avatar">
-                          {getInitials(request.sender_name)}
-                        </div>
-                        <span className="friends__name">
-                          {capitalize(request.sender_name)}
-                        </span>
-                        <div className="friends__actions">
-                          <button
-                            type="button"
-                            className="friends__decline"
-                            onClick={() => handleDeclineFriend(request)}
-                          >
-                            Decline
-                          </button>
-                          <button
-                            type="button"
-                            className="friends__accept"
-                            onClick={() => handleAcceptFriend(request)}
-                          >
-                            Accept
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
               <button
                 type="button"
                 className="login__button profile__edit"
@@ -2235,7 +2231,200 @@ function App() {
           </div>
         )}
 
-        {toast && <div className="toast">{toast}</div>}
+        {toastNode}
+        {renderBottomNav()}
+      </div>
+    );
+  }
+
+  if (step === 'home' && activeTab === 'friends') {
+    const acceptedFriends = friendRequests.filter(
+      (request) =>
+        request.status === 'accepted' &&
+        (request.sender_squadr_id === squadrId ||
+          request.receiver_squadr_id === squadrId)
+    );
+
+    const pendingIncoming = friendRequests.filter(
+      (request) =>
+        request.status === 'pending' &&
+        request.receiver_squadr_id === squadrId
+    );
+
+    const friendDisplayName = (request) =>
+      request.sender_squadr_id === squadrId
+        ? request.receiver_name
+        : request.sender_name;
+
+    return (
+      <div className="home home--with-nav">
+        <main className="home__main friends-tab">
+          <div className="profile__section-head">
+            <h1 className="friends-tab__title">Friends</h1>
+            <button
+              type="button"
+              className="friends__add-btn"
+              onClick={handleOpenAddFriend}
+            >
+              + Add Friend
+            </button>
+          </div>
+
+          <div className="friends__tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={friendsTab === 'friends'}
+              className={`friends__tab${
+                friendsTab === 'friends' ? ' friends__tab--active' : ''
+              }`}
+              onClick={() => setFriendsTab('friends')}
+            >
+              Friends
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={friendsTab === 'requests'}
+              className={`friends__tab${
+                friendsTab === 'requests' ? ' friends__tab--active' : ''
+              }`}
+              onClick={() => setFriendsTab('requests')}
+            >
+              Requests
+              {pendingIncoming.length > 0 && (
+                <span className="friends__badge">
+                  {pendingIncoming.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {friendsTab === 'friends' ? (
+            acceptedFriends.length === 0 ? (
+              <p className="profile__empty">
+                No friends yet. Add someone by their SQUADR ID.
+              </p>
+            ) : (
+              <div className="friends__list">
+                {acceptedFriends.map((request) => {
+                  const name = friendDisplayName(request);
+                  return (
+                    <div key={request.id} className="friends__card">
+                      <div className="friends__avatar">
+                        {getInitials(name)}
+                      </div>
+                      <span className="friends__name">
+                        {capitalize(name)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : pendingIncoming.length === 0 ? (
+            <p className="profile__empty">No pending requests</p>
+          ) : (
+            <div className="friends__list">
+              {pendingIncoming.map((request) => (
+                <div key={request.id} className="friends__card">
+                  <div className="friends__avatar">
+                    {getInitials(request.sender_name)}
+                  </div>
+                  <span className="friends__name">
+                    {capitalize(request.sender_name)}
+                  </span>
+                  <div className="friends__actions">
+                    <button
+                      type="button"
+                      className="friends__decline"
+                      onClick={() => handleDeclineFriend(request)}
+                    >
+                      Decline
+                    </button>
+                    <button
+                      type="button"
+                      className="friends__accept"
+                      onClick={() => handleAcceptFriend(request)}
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+
+        {showAddFriend && (
+          <div className="confirm" role="dialog" aria-modal="true">
+            <div className="confirm__card add-friend__card">
+              <h2 className="confirm__title">Add Friend</h2>
+              <form className="add-friend__form" onSubmit={handleSearchFriend}>
+                <input
+                  type="text"
+                  className="login__input"
+                  placeholder="Enter SQUADR ID"
+                  value={addFriendQuery}
+                  onChange={(e) => setAddFriendQuery(e.target.value)}
+                  autoComplete="off"
+                />
+                <button type="submit" className="login__button">
+                  Search
+                </button>
+              </form>
+
+              {addFriendSearched &&
+                (addFriendResult ? (
+                  <div className="add-friend__result">
+                    <div className="friends__avatar">
+                      {getInitials(addFriendResult.name)}
+                    </div>
+                    <div className="add-friend__result-info">
+                      <span className="friends__name">
+                        {capitalize(addFriendResult.name)}
+                      </span>
+                      {addFriendResult.city && (
+                        <span className="add-friend__result-city">
+                          {addFriendResult.city}
+                        </span>
+                      )}
+                    </div>
+                    {addFriendResult.squadr_id === squadrId ? (
+                      <span className="add-friend__hint">That's you!</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="friends__accept"
+                        onClick={handleSendFriendRequest}
+                      >
+                        Send Request
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <p className="add-friend__empty">
+                    No player found with that SQUADR ID
+                  </p>
+                ))}
+
+              {addFriendStatus && (
+                <p className="add-friend__error">{addFriendStatus}</p>
+              )}
+
+              <button
+                type="button"
+                className="confirm__cancel add-friend__close"
+                onClick={handleCloseAddFriend}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {toastNode}
+        {renderBottomNav()}
       </div>
     );
   }
@@ -2912,8 +3101,8 @@ function App() {
     );
 
     return (
-      <div className="home">
-        <header className="home__header">
+      <div className="home home--with-nav">
+        <header className="home__header home__header--nav">
           <SquadrLogo size="small" />
           <div className="home__header-actions">
             <button
@@ -2928,47 +3117,19 @@ function App() {
                 <span className="home__toggle-thumb" />
               </span>
             </button>
-            <button
-              type="button"
-              className="home__profile"
-              aria-label="Profile"
-              onClick={handleOpenProfile}
-            >
-              <svg
-                className="home__profile-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M5 20c0-3.314 3.134-6 7-6s7 2.686 7 6" />
-              </svg>
-            </button>
           </div>
         </header>
 
-        <nav className="home__tabs" aria-label="Home sections">
-          <button
-            type="button"
-            className={`home__tab${activeTab === 'live' ? ' home__tab--active' : ''}`}
-            onClick={() => setActiveTab('live')}
-          >
-            Scheduled Sessions
-          </button>
-          <button
-            type="button"
-            className={`home__tab${activeTab === 'find' ? ' home__tab--active' : ''}`}
-            onClick={() => setActiveTab('find')}
-          >
-            Instant Sessions
-          </button>
-        </nav>
-
         <main className="home__main">
-          {activeTab === 'live' ? (
-            <div className="home__sessions">
+          {(activeTab === 'home' || activeTab === 'instant') && (
+            <div className="home__panels">
+              <div
+                className={`home__panels-track${
+                  activeTab === 'instant' ? ' home__panels-track--instant' : ''
+                }`}
+              >
+                <div className="home__panel">
+                  <div className="home__sessions">
               {invitedCards.map(({ invite, session }) => (
                 <article
                   key={`invite-${invite.id}`}
@@ -3099,7 +3260,8 @@ function App() {
                 })
               )}
             </div>
-          ) : (
+                </div>
+                <div className="home__panel">
             <div className="find">
               {!isPro ? (
                 <div className="pro-lock">
@@ -3218,10 +3380,13 @@ function App() {
                 ))}
               </div>
             </div>
+                </div>
+              </div>
+            </div>
           )}
         </main>
 
-        {activeTab === 'live' && (
+        {activeTab === 'home' && (
           <button
             type="button"
             className="home__fab"
@@ -3270,7 +3435,8 @@ function App() {
           </div>
         )}
 
-        {toast && <div className="toast">{toast}</div>}
+        {toastNode}
+        {renderBottomNav()}
       </div>
     );
   }
@@ -3507,6 +3673,7 @@ function App() {
 
         {loginError && <p className="login__error login__error--auth">{loginError}</p>}
       </div>
+      {toastNode}
     </div>
   );
 }

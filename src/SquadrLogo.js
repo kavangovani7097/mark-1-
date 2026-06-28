@@ -18,7 +18,7 @@ function SquadrLogo({ size = 'large', className = '' }) {
       role="img"
       aria-label="Squadr"
     >
-      <span className="squadr-logo__mark-wrap">
+      <span className="squadr-logo__mark-wrap squadr-logo__mark-wrap--breathe">
         <svg
           className="squadr-logo__mark"
           viewBox="0 0 26 24"
