@@ -11,6 +11,29 @@ const restUrl = (path) => `${supabaseUrl}/rest/v1/${path}`;
 
 const asArray = (data) => (Array.isArray(data) ? data : []);
 
+const dedupeDiscoverablePlayers = (players) => {
+  const bySquadrId = new Map();
+
+  players.forEach((player) => {
+    if (!player?.squadr_id || bySquadrId.has(player.squadr_id)) return;
+    bySquadrId.set(player.squadr_id, player);
+  });
+
+  const byNameCity = new Map();
+  const deduped = [];
+
+  bySquadrId.forEach((player) => {
+    const nameKey = (player.name || '').trim().toLowerCase();
+    const cityKey = (player.city || '').trim().toLowerCase();
+    const nameCityKey = `${nameKey}|${cityKey}`;
+    if (byNameCity.has(nameCityKey)) return;
+    byNameCity.set(nameCityKey, player);
+    deduped.push(player);
+  });
+
+  return deduped;
+};
+
 const ID_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
 export function generateSquadrId() {
@@ -36,20 +59,22 @@ export async function upsertUser({ name, squadrId, city, sports, lat, lng }) {
 }
 
 export async function fetchDiscoverablePlayers({ excludeSquadrId } = {}) {
+  const filters = ['name.not.is.null', 'name.neq.', 'squadr_id.not.is.null'];
+  if (excludeSquadrId) {
+    filters.push(`squadr_id.neq.${excludeSquadrId}`);
+  }
+
   const params = new URLSearchParams({
     select: 'squadr_id,name,city,sports',
     order: 'name.asc',
+    and: `(${filters.join(',')})`,
   });
-
-  if (excludeSquadrId) {
-    params.set('squadr_id', `neq.${excludeSquadrId}`);
-  }
 
   const response = await fetch(`${restUrl('users')}?${params}`, {
     headers: restHeaders(),
   });
 
-  return asArray(await response.json());
+  return dedupeDiscoverablePlayers(asArray(await response.json()));
 }
 
 export async function findUserBySquadrId(squadrId) {

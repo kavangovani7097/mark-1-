@@ -208,6 +208,12 @@ const capitalize = (name) => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
+const isDisplayablePlayerName = (name) => {
+  const trimmed = name?.trim();
+  if (!trimmed) return false;
+  return trimmed.toLowerCase() !== 'player';
+};
+
 const bottomNavSvgProps = {
   width: 24,
   height: 24,
@@ -3728,6 +3734,7 @@ function App() {
               <div className="find__players">
                 {(() => {
                   const visibleFindPlayers = findPlayers.filter((player) => {
+                    if (!isDisplayablePlayerName(player.name)) return false;
                     if (!findSportFilter) return true;
                     const sports = Array.isArray(player.sports) ? player.sports : [];
                     return sports.includes(findSportFilter);
@@ -3750,7 +3757,7 @@ function App() {
                       <div className="find__player-top">
                         <div className="find__player-heading">
                           <h2 className="find__player-name">
-                            {capitalize(player.name?.split(' ')[0] || player.name || 'Player')}
+                            {capitalize(player.name.trim().split(' ')[0])}
                           </h2>
                           {player.city && (
                             <p className="find__player-city">{player.city}</p>
