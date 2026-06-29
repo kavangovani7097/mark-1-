@@ -41,6 +41,10 @@ const PWA_INSTALLED_KEY = 'squadr_pwa_installed';
 const PWA_ANDROID_DISMISSED_KEY = 'squadr_pwa_prompt_dismissed';
 const PWA_IOS_DISMISSED_KEY = 'squadr_ios_prompt_dismissed';
 
+const LEGAL_TERMS_URL = 'https://squadr.in/legal.html#terms';
+const LEGAL_PRIVACY_URL = 'https://squadr.in/legal.html#privacy';
+const LEGAL_COMMUNITY_URL = 'https://squadr.in/legal.html#community';
+
 const isStandalonePwa = () =>
   (typeof window.matchMedia === 'function' &&
     window.matchMedia('(display-mode: standalone)').matches) ||
@@ -446,6 +450,7 @@ function App() {
   const [email, setEmail] = useState('');
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [step, setStep] = useState('splash');
   const [splashExiting, setSplashExiting] = useState(false);
   const [otp, setOtp] = useState(EMPTY_OTP);
@@ -2599,6 +2604,32 @@ function App() {
               >
                 Delete Account
               </button>
+
+              <p className="profile__legal legal-links legal-links--footer">
+                <a
+                  href={LEGAL_TERMS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Terms
+                </a>
+                {' · '}
+                <a
+                  href={LEGAL_PRIVACY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Privacy
+                </a>
+                {' · '}
+                <a
+                  href={LEGAL_COMMUNITY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Community
+                </a>
+              </p>
             </>
           )}
         </main>
@@ -4262,8 +4293,9 @@ function App() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="tel"
+            disabled={!termsAccepted}
           />
-          <button type="submit" className="login__button">
+          <button type="submit" className="login__button" disabled={!termsAccepted}>
             Send OTP
           </button>
         </form>
@@ -4282,8 +4314,9 @@ function App() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
+                disabled={!termsAccepted}
               />
-              <button type="submit" className="login__button">
+              <button type="submit" className="login__button" disabled={!termsAccepted}>
                 Send Magic Link
               </button>
               {emailSent && (
@@ -4297,6 +4330,7 @@ function App() {
               type="button"
               className="login__button login__button--secondary"
               onClick={handleContinueWithEmail}
+              disabled={!termsAccepted}
             >
               Continue with Email
             </button>
@@ -4306,6 +4340,7 @@ function App() {
             type="button"
             className="login__button login__button--secondary login__button--google"
             onClick={handleGoogleLogin}
+            disabled={!termsAccepted}
           >
             <svg
               className="login__google-icon"
@@ -4331,6 +4366,44 @@ function App() {
             </svg>
             Continue with Google
           </button>
+
+          <label className="login__terms">
+            <input
+              type="checkbox"
+              className="login__terms-checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+            />
+            <span className="login__terms-label legal-links">
+              I agree to the{' '}
+              <a
+                href={LEGAL_TERMS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Terms of Service
+              </a>
+              ,{' '}
+              <a
+                href={LEGAL_PRIVACY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Privacy Policy
+              </a>
+              {' and '}
+              <a
+                href={LEGAL_COMMUNITY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Community Guidelines
+              </a>
+            </span>
+          </label>
         </div>
 
         {loginError && <p className="login__error login__error--auth">{loginError}</p>}

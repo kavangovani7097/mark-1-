@@ -130,8 +130,17 @@ beforeEach(() => {
   });
 });
 
+async function acceptTerms() {
+  await userEvent.click(
+    screen.getByRole('checkbox', {
+      name: /I agree to the Terms of Service/i,
+    })
+  );
+}
+
 async function sendOtp() {
   await screen.findByPlaceholderText('Phone number');
+  await acceptTerms();
   await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
   await userEvent.click(screen.getByRole('button', { name: 'Send OTP' }));
   await screen.findByRole('button', { name: 'Verify' });
@@ -159,7 +168,8 @@ test('renders login page', async () => {
   expect(await screen.findByText('Find your crew. Play your sport.')).toBeInTheDocument();
   expect(screen.getByRole('img', { name: 'Squadr' })).toBeInTheDocument();
   expect(screen.getByPlaceholderText('Phone number')).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Send OTP' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Send OTP' })).toBeDisabled();
+  expect(screen.getByRole('checkbox', { name: /I agree to the Terms of Service/i })).not.toBeChecked();
 });
 
 test('shows OTP screen after sending code', async () => {
