@@ -1528,8 +1528,10 @@ gmp-place-autocomplete {
 }
 
 .find__instant-bolt {
-  font-size: 1.25rem;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 @keyframes bolt-shake {
@@ -1601,7 +1603,9 @@ gmp-place-autocomplete {
 }
 
 .instant__location-card-icon {
-  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1;
 }
 

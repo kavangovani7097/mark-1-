@@ -278,6 +278,58 @@ function BottomNavIcon({ type }) {
   }
 }
 
+const instantFlowSvgBase = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+};
+
+function InstantLightningIcon({ size = 20 }) {
+  return (
+    <svg
+      {...instantFlowSvgBase}
+      width={size}
+      height={size}
+      stroke="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+    </svg>
+  );
+}
+
+function LocationPinIcon({ size = 24, stroke = '#7B2D42' }) {
+  return (
+    <svg
+      {...instantFlowSvgBase}
+      width={size}
+      height={size}
+      stroke={stroke}
+      aria-hidden="true"
+    >
+      <path d="M12 21s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+function SearchIcon({ size = 24, stroke = '#7B2D42' }) {
+  return (
+    <svg
+      {...instantFlowSvgBase}
+      width={size}
+      height={size}
+      stroke={stroke}
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
 const AVAILABILITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const AVAILABILITY_WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const AVAILABILITY_WEEKENDS = ['Sat', 'Sun'];
@@ -3066,7 +3118,7 @@ function App() {
               disabled={instantLocationLoading}
             >
               <span className="instant__location-card-icon" aria-hidden="true">
-                📍
+                <LocationPinIcon />
               </span>
               <span className="instant__location-card-title">Use Current Location</span>
               {instantLocationMode === 'current' && instantLocationLoading && (
@@ -3091,7 +3143,7 @@ function App() {
               onClick={handleSelectManualLocation}
             >
               <span className="instant__location-card-icon" aria-hidden="true">
-                🔍
+                <SearchIcon />
               </span>
               <span className="instant__location-card-title">Set Manually</span>
             </button>
@@ -3879,7 +3931,7 @@ function App() {
                   onClick={handleOpenInstantFind}
                 >
                   <span className="find__instant-bolt" aria-hidden="true">
-                    ⚡
+                    <InstantLightningIcon />
                   </span>
                   Find Players Now
                 </button>
