@@ -2066,9 +2066,15 @@ function App() {
             />
             <span className="pwa-install__ios-title">Install SQUADR</span>
           </div>
-          <p className="pwa-install__ios-steps">
-            Tap Share → then &apos;Add to Home Screen&apos;
-          </p>
+          <ol className="pwa-install__ios-steps">
+            <li>
+              Tap the <span className="pwa-install__ios-em">···</span> (three dots) in the
+              bottom right of Safari
+            </li>
+            <li>Tap Share</li>
+            <li>Tap View More</li>
+            <li>Tap Add to Home Screen</li>
+          </ol>
           <svg
             className="pwa-install__arrow"
             viewBox="0 0 24 24"
