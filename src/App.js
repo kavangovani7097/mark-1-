@@ -33,6 +33,7 @@ import {
 } from './friends';
 import SplashScreen from './SplashScreen';
 import OnboardingSlides from './OnboardingSlides';
+import LandingPage from './LandingPage';
 import Toast from './Toast';
 import './App.css';
 
@@ -539,7 +540,7 @@ function App() {
   const inputRefs = useRef([]);
   const fileInputRef = useRef(null);
   const closedRequestRef = useRef(false);
-  const postSplashRouteRef = useRef('login');
+  const postSplashRouteRef = useRef('landing');
   const stepRef = useRef(step);
   const deferredPromptRef = useRef(null);
 
@@ -686,6 +687,8 @@ function App() {
 
         if (data?.session) {
           postSplashRouteRef.current = getPostAuthStep();
+        } else if (localStorage.getItem(ONBOARDING_SEEN_KEY)) {
+          postSplashRouteRef.current = 'landing';
         } else {
           postSplashRouteRef.current = 'login';
         }
@@ -694,9 +697,11 @@ function App() {
           applyPostSplashRoute();
         }
       } catch {
-        postSplashRouteRef.current = 'login';
+        postSplashRouteRef.current = localStorage.getItem(ONBOARDING_SEEN_KEY)
+          ? 'landing'
+          : 'login';
         if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
-          setStep('login');
+          setStep(postSplashRouteRef.current);
         }
       }
     };
@@ -2191,6 +2196,20 @@ function App() {
     return (
       <>
         <OnboardingSlides onComplete={completeIntro} onSkip={completeIntro} />
+        {toastNode}
+      </>
+    );
+  }
+
+  if (step === 'landing') {
+    return (
+      <>
+        <LandingPage
+          onGetStarted={() => setStep('login')}
+          termsUrl={LEGAL_TERMS_URL}
+          privacyUrl={LEGAL_PRIVACY_URL}
+          communityUrl={LEGAL_COMMUNITY_URL}
+        />
         {toastNode}
       </>
     );

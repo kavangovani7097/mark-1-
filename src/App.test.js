@@ -89,6 +89,14 @@ beforeEach(() => {
       },
     },
   };
+  window.IntersectionObserver = jest.fn(function IntersectionObserverMock(callback) {
+    this.observe = jest.fn(() => {
+      callback([{ isIntersecting: true }]);
+    });
+    this.disconnect = jest.fn();
+    this.unobserve = jest.fn();
+  });
+  Element.prototype.scrollIntoView = jest.fn();
   supabase.auth.signInWithOtp.mockResolvedValue({ error: null });
   supabase.auth.verifyOtp.mockResolvedValue({
     data: { user: { id: 'test-user-id' } },
@@ -130,6 +138,14 @@ beforeEach(() => {
   });
 });
 
+async function goToLoginFromLanding() {
+  const getStartedButtons = await screen.findAllByRole('button', {
+    name: 'Get Started',
+  });
+  await userEvent.click(getStartedButtons[0]);
+  await screen.findByPlaceholderText('Phone number');
+}
+
 async function acceptTerms() {
   await userEvent.click(
     screen.getByRole('checkbox', {
@@ -139,6 +155,7 @@ async function acceptTerms() {
 }
 
 async function sendOtp() {
+  await goToLoginFromLanding();
   await screen.findByPlaceholderText('Phone number');
   await acceptTerms();
   await userEvent.type(screen.getByPlaceholderText('Phone number'), '5551234567');
@@ -163,10 +180,15 @@ async function goToHomeScreen() {
   await screen.findByRole('heading', { name: 'Badminton' });
 }
 
-test('renders login page', async () => {
+test('renders landing page before login', async () => {
   render(<App />);
-  expect(await screen.findByText('Find your crew. Play your sport.')).toBeInTheDocument();
-  expect(screen.getByRole('img', { name: 'Squadr' })).toBeInTheDocument();
+  expect(await screen.findByText('Find your crew.')).toBeInTheDocument();
+  expect(screen.getByText('Play your sport.')).toBeInTheDocument();
+  expect(screen.getAllByRole('img', { name: 'Squadr' }).length).toBeGreaterThanOrEqual(1);
+  expect(screen.getAllByRole('button', { name: 'Get Started' }).length).toBeGreaterThanOrEqual(1);
+  expect(screen.queryByPlaceholderText('Phone number')).not.toBeInTheDocument();
+
+  await goToLoginFromLanding();
   expect(screen.getByPlaceholderText('Phone number')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Send OTP' })).toBeDisabled();
   expect(screen.getByRole('checkbox', { name: /I agree to the Terms of Service/i })).not.toBeChecked();
