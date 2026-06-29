@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQUADR — Legal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0A0A12;
+      --surface: #13131f;
+      --border: #1e1e2e;
+      --wine: #7B2D42;
+      --wine-light: #a84560;
+      --text: #f0f0f0;
+      --muted: #8888a0;
+      --font: 'Space Grotesk', sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1rem;
+      line-height: 1.75;
+    }
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,10,18,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-back {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--text); }
+    .page-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 4rem 2rem 6rem;
+    }
+    .legal-section { margin-bottom: 6rem; padding-top: 2rem; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--wine-light);
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-size: 2.25rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .section-date {
+      font-size: 0.875rem;
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      padding-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 2.5rem;
+      margin-bottom: 0.75rem;
+    }
+    h3 {
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 0.8rem;
+    }
+    p { color: #c0c0d0; margin-bottom: 1rem; }
+    ul { list-style: none; margin-bottom: 1rem; padding-left: 0; }
+    ul li {
+      color: #c0c0d0;
+      padding: 0.3rem 0 0.3rem 1.5rem;
+      position: relative;
+    }
+    ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.9rem;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--wine);
+    }
+    .highlight-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--wine);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .highlight-box p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 4rem 0; }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+    footer a { color: var(--wine-light); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .section-title { font-size: 1.75rem; }
+      .page-wrap { padding: 2rem 1.25rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="https://squadr.in" class="nav-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="5" r="3" fill="#7B2D42"/>
+      <circle cx="5" cy="17" r="3" fill="#7B2D42"/>
+      <circle cx="19" cy="17" r="3" fill="#7B2D42"/>
+    </svg>
+    SQUADR
+  </a>
+  <ul class="nav-links">
+    <li><a href="#terms">Terms</a></li>
+    <li><a href="#privacy">Privacy</a></li>
+    <li><a href="#community">Community</a></li>
+  </ul>
+  <a href="https://squadr.in" class="nav-back">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    Back to app
+  </a>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- TERMS OF SERVICE -->
+  <section class="legal-section" id="terms">
+    <p class="section-label">Legal</p>
+    <h1 class="section-title">Terms of Service</h1>
+    <p class="section-date">Effective Date: June 28, 2026 &nbsp;·&nbsp; Last Updated: June 28, 2026</p>
+
+    <p>Welcome to SQUADR. By accessing or using our platform at squadr.in or any associated application, you agree to be bound by these Terms of Service. If you do not agree, please do not use SQUADR.</p>
+
+    <h2>1. About SQUADR</h2>
+    <p>SQUADR is a sports-social platform that connects individuals who want to play recreational sports together. The platform is operated from Ahmedabad, Gujarat, India.</p>
+
+    <h2>2. Eligibility</h2>
+    <p>You must be at least 18 years of age to create an account on SQUADR. By registering, you confirm that you meet this requirement. If you are under 18, you may not use our platform.</p>
+
+    <h2>3. Your Account</h2>
+    <p>When you register, you are assigned a unique SQUADR ID. You are responsible for all activity that occurs under your account. Keep your login credentials secure and notify us immediately if you suspect unauthorised access. Each person may hold only one active account.</p>
+
+    <h2>4. What SQUADR Offers</h2>
+    <ul>
+      <li>Scheduled Sessions — create and join planned sports sessions with other users</li>
+      <li>Instant Mode (Pro) — real-time player matching based on sport and location</li>
+      <li>Friends — connect with other players using SQUADR IDs</li>
+      <li>Group Chat — communicate with matched players within the platform</li>
+      <li>Player Profiles — showcase your sports, skill level, availability, and ratings</li>
+    </ul>
+
+    <h2>5. SQUADR Pro</h2>
+    <h3>Subscription</h3>
+    <p>SQUADR Pro is a paid subscription that unlocks premium features including Instant Mode, priority matching, private sessions, a Pro badge, and session analytics.</p>
+    <h3>Pricing</h3>
+    <p>SQUADR Pro is available at ₹149 per month or ₹999 per year, inclusive of applicable taxes. We reserve the right to adjust pricing with 30 days' notice.</p>
+    <h3>Billing and Cancellation</h3>
+    <p>Payments are processed securely through our payment partner. Subscriptions renew automatically until cancelled. You may cancel at any time; cancellation takes effect at the end of the current billing period.</p>
+    <h3>Refunds</h3>
+    <p>First-time Pro subscribers may request a full refund within 7 days of their initial charge. Subsequent billing cycles are non-refundable.</p>
+
+    <h2>6. Acceptable Use</h2>
+    <p>You agree not to use SQUADR to:</p>
+    <ul>
+      <li>Harass, threaten, or harm other users</li>
+      <li>Share false, misleading, or defamatory information</li>
+      <li>Impersonate another person or entity</li>
+      <li>Spam or send unsolicited messages to other users</li>
+      <li>Attempt to access any part of the platform without authorisation</li>
+      <li>Use automated tools, bots, or scrapers</li>
+      <li>Engage in any activity that violates applicable Indian law</li>
+    </ul>
+
+    <h2>7. Content</h2>
+    <p>You retain ownership of content you create on SQUADR. By posting content, you grant SQUADR a non-exclusive, royalty-free licence to display that content within the platform. We reserve the right to remove content that violates these Terms or our Community Guidelines.</p>
+
+    <h2>8. Location Data</h2>
+    <p>Instant Mode uses your device's location to match you with nearby players. Location access is requested explicitly and is never stored permanently. It is used solely for real-time matching during an active session.</p>
+
+    <h2>9. Limitation of Liability</h2>
+    <p>SQUADR is a platform for connecting sports players. We do not organise, supervise, or take responsibility for physical activities that take place during sessions. You participate at your own risk. SQUADR is not liable for any injury, damage, loss, or dispute arising from sessions arranged through the platform.</p>
+    <div class="highlight-box">
+      <p>To the maximum extent permitted by law, SQUADR's total liability to you for any claim shall not exceed the amount you paid us in the 3 months preceding the claim.</p>
+    </div>
+
+    <h2>10. Termination</h2>
+    <p>We may suspend or terminate any account that violates these Terms. You may delete your account at any time through the Profile screen, which permanently removes all your data.</p>
+
+    <h2>11. Governing Law</h2>
+    <p>These Terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of the courts of Ahmedabad, Gujarat, India.</p>
+
+    <h2>12. Changes</h2>
+    <p>We may update these Terms from time to time. Continued use of SQUADR after changes are posted constitutes your acceptance. We will notify users of material changes via in-app notification.</p>
+
+    <h2>13. Contact</h2>
+    <p>For questions about these Terms, contact us at: <strong>Ahmedabad, Gujarat, India</strong>. A dedicated support email will be added shortly.</p>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- PRIVACY POLICY -->
+  <section class="legal-section" id="privacy">
+    <p class="section-label">Legal</p>
+    <h1 class="section-title">Privacy Policy</h1>
+    <p class="section-date">Effective Date: June 28, 2026 &nbsp;·&nbsp; Last Updated: June 28, 2026</p>
+
+    <p>Your privacy matters to us. This Policy explains what data we collect, why we collect it, and how we protect it. SQUADR is operated from Ahmedabad, Gujarat, India.</p>
+
+    <h2>1. Data We Collect</h2>
+    <h3>Account Information</h3>
+    <ul>
+      <li>First name and age</li>
+      <li>Phone number (for OTP verification)</li>
+      <li>Email address (for magic link login)</li>
+      <li>Google account name and email (if you sign in with Google)</li>
+      <li>City of residence and sports preferences</li>
+      <li>Profile photo (optional)</li>
+    </ul>
+    <h3>Activity Data</h3>
+    <ul>
+      <li>Sessions you create, join, or host</li>
+      <li>Instant match requests and history</li>
+      <li>Messages sent in group chats</li>
+      <li>Ratings given and received</li>
+      <li>Friend connections and requests</li>
+      <li>Badges earned and session statistics</li>
+    </ul>
+    <h3>Location Data</h3>
+    <p>Approximate GPS coordinates are collected only when Instant Mode is active or "Open to Play" is toggled on. We do not store your precise location permanently — it is used in real-time for matching only and discarded after a session concludes.</p>
+
+    <h2>2. How We Use Your Data</h2>
+    <ul>
+      <li>To create and manage your SQUADR account</li>
+      <li>To match you with players based on sport, location, and availability</li>
+      <li>To enable group chats between matched players</li>
+      <li>To display your profile to other users on the platform</li>
+      <li>To process Pro subscription payments</li>
+      <li>To deliver OTP verification</li>
+      <li>To improve platform features and resolve issues</li>
+      <li>To detect abuse and enforce our Community Guidelines</li>
+    </ul>
+
+    <h2>3. Data Sharing</h2>
+    <p>We do not sell your personal data. We do not share your data with advertisers or data brokers. Your information is used solely to operate and improve SQUADR.</p>
+    <p>To deliver our services, we work with a carefully selected set of infrastructure and technology partners who process data strictly on our behalf, under confidentiality obligations, and only to the extent necessary to provide their service. We do not permit these partners to use your data for their own purposes.</p>
+    <p>We may disclose data if required by law, court order, or to protect the rights and safety of our users or the public.</p>
+
+    <h2>4. Data Retention</h2>
+    <ul>
+      <li>Account data is retained until you delete your account</li>
+      <li>Chat messages are retained for 30 days after a session concludes</li>
+      <li>Instant match requests are purged within 24 hours of expiry</li>
+      <li>Payment records are retained for 7 years as required under Indian law</li>
+    </ul>
+
+    <h2>5. Your Rights</h2>
+    <p>You have the right to access, correct, or delete your personal data at any time. You can delete your account and all associated data directly through the Profile screen in the app. For other data requests, contact us at the address below.</p>
+
+    <h2>6. Security</h2>
+    <p>We implement industry-standard security measures including HTTPS encryption, secure authentication, and access controls on all data stores. We take reasonable and appropriate steps to protect your information, though no digital system is entirely without risk.</p>
+
+    <h2>7. Children's Privacy</h2>
+    <p>SQUADR is not intended for anyone under 18. We do not knowingly collect data from minors. If we become aware of such an account, we will delete it immediately.</p>
+
+    <h2>8. Cookies and Local Storage</h2>
+    <p>We use browser local storage to save your profile and preferences on your device. We do not use advertising cookies or third-party tracking tools.</p>
+
+    <h2>9. Grievance Officer</h2>
+    <p>In accordance with the Information Technology Act, 2000, any grievances regarding your personal data may be directed to:</p>
+    <div class="highlight-box">
+      <p><strong>SQUADR Grievance Officer</strong><br>
+      Ahmedabad, Gujarat, India<br>
+      We will respond to all grievances within 30 days of receipt.</p>
+    </div>
+
+    <h2>10. Changes</h2>
+    <p>We may update this Privacy Policy from time to time. We will notify users of significant changes via in-app notification. Continued use of SQUADR after changes are posted constitutes acceptance.</p>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- COMMUNITY GUIDELINES -->
+  <section class="legal-section" id="community">
+    <p class="section-label">Legal</p>
+    <h1 class="section-title">Community Guidelines</h1>
+    <p class="section-date">Effective Date: June 28, 2026 &nbsp;·&nbsp; Last Updated: June 28, 2026</p>
+
+    <p>SQUADR exists to make playing sports easier and more social. These Guidelines keep the community safe, respectful, and worth being part of. They apply to everything you do on SQUADR — your profile, your sessions, and your chats.</p>
+
+    <h2>Be Respectful</h2>
+    <ul>
+      <li>Treat every player with respect, regardless of skill level, age, gender, religion, caste, or background</li>
+      <li>Keep group chat conversations civil and on-topic</li>
+      <li>Disagreements happen — resolve them calmly or step away</li>
+      <li>No offensive language, slurs, or personal attacks of any kind</li>
+    </ul>
+
+    <h2>Show Up</h2>
+    <ul>
+      <li>If you join or accept a session, be there — ghosting wastes everyone's time</li>
+      <li>If something comes up, cancel early and let the group know</li>
+      <li>Only accept Instant Match requests if you are genuinely available to play right now</li>
+      <li>Repeated no-shows may result in account restrictions</li>
+    </ul>
+
+    <h2>Play Fair</h2>
+    <ul>
+      <li>Be honest about your skill level in your profile</li>
+      <li>Agree on rules before the game starts</li>
+      <li>Win with humility, lose with grace</li>
+      <li>SQUADR is for recreational and semi-competitive play — keep the spirit friendly</li>
+    </ul>
+
+    <h2>Stay Safe</h2>
+    <ul>
+      <li>Meet in public, well-lit locations — especially for first-time sessions with new players</li>
+      <li>Trust your instincts — if something feels off, cancel and report</li>
+      <li>Do not share personal contact details in group chats</li>
+      <li>SQUADR is not responsible for injuries during physical activity — play at your own risk</li>
+    </ul>
+
+    <h2>Respect Privacy</h2>
+    <ul>
+      <li>Do not share screenshots of private chats outside SQUADR</li>
+      <li>Do not share other users' personal information without their consent</li>
+      <li>SQUADR IDs are for connecting on the platform — respect how others use theirs</li>
+    </ul>
+
+    <h2>Rate Honestly</h2>
+    <ul>
+      <li>Rate players based on actual experience — punctuality, sportsmanship, communication</li>
+      <li>Do not use ratings to settle personal scores</li>
+      <li>Fake ratings are a violation and may result in suspension</li>
+    </ul>
+
+    <h2>Zero Tolerance</h2>
+    <p>The following result in immediate and permanent account termination:</p>
+    <ul>
+      <li>Harassment, threats, or intimidation of any user</li>
+      <li>Discrimination based on gender, religion, caste, race, sexuality, or disability</li>
+      <li>Creating fake accounts or impersonating other users</li>
+      <li>Sexual harassment or inappropriate conduct of any kind</li>
+      <li>Using SQUADR to facilitate illegal activities</li>
+      <li>Scamming or defrauding other users</li>
+    </ul>
+
+    <h2>Reporting</h2>
+    <p>If you witness a violation, report it. All reports are reviewed within 48 hours and handled confidentially. SQUADR reserves the right to act at its discretion to protect the community.</p>
+
+    <div class="highlight-box">
+      <p><strong>Play hard. Play fair. Find your crew.</strong></p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p>© 2026 SQUADR &nbsp;·&nbsp; Ahmedabad, Gujarat, India</p>
+  <p style="margin-top:0.5rem;">
+    <a href="#terms">Terms</a> &nbsp;·&nbsp;
+    <a href="#privacy">Privacy</a> &nbsp;·&nbsp;
+    <a href="#community">Community</a> &nbsp;·&nbsp;
+    <a href="https://squadr.in">Back to App</a>
+  </p>
+</footer>
+
+</body>
+</html>
