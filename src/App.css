@@ -3903,6 +3903,20 @@ button:active,
 
 .landing-hero__copy {
   max-width: 38rem;
+  width: 100%;
+}
+
+.landing-hero__copy-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.landing-hero__copy-stack > * {
+  width: 100%;
+  margin-left: 0;
+  padding-left: 0;
 }
 
 .landing-eyebrow {
@@ -3915,10 +3929,17 @@ button:active,
   transition: transform 0.1s linear;
 }
 
+.landing-hero__wordmark-wrap {
+  transition: transform 0.1s linear;
+}
+
 .landing-hero__wordmark {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
+  width: 100%;
   margin: 0 0 1.5rem;
+  padding: 0;
   font-size: clamp(4rem, 12vw, 9rem);
   font-weight: 800;
   line-height: 0.92;
@@ -3953,6 +3974,12 @@ button:active,
   display: flex;
   flex-wrap: wrap;
   gap: 0.875rem;
+}
+
+.landing-hero__actions .landing-btn {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .landing-hero__visual {

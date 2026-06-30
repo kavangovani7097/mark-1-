@@ -349,25 +349,30 @@ function LandingPage({
       <section className="landing-hero" ref={heroRef}>
         <div className="landing-hero__grid">
           <div className="landing-hero__copy">
-            <p
-              className="landing-eyebrow"
-              style={{ transform: `translateY(${parallax.eyebrow}px)` }}
-            >
-              PLAY · CONNECT · REPEAT
-            </p>
-            <div style={{ transform: `translateY(${parallax.wordmark}px)` }}>
-              <HeroWordmark />
-            </div>
-            <p className="landing-hero__sub">
-              Find your crew. Play your sport.
-            </p>
-            <div className="landing-hero__actions">
-              <button type="button" className="landing-btn" onClick={onGetStarted}>
-                Get Started
-              </button>
-              <button type="button" className="landing-btn" onClick={scrollToProcess}>
-                How it works
-              </button>
+            <div className="landing-hero__copy-stack">
+              <p
+                className="landing-eyebrow"
+                style={{ transform: `translateY(${parallax.eyebrow}px)` }}
+              >
+                PLAY · CONNECT · REPEAT
+              </p>
+              <div
+                className="landing-hero__wordmark-wrap"
+                style={{ transform: `translateY(${parallax.wordmark}px)` }}
+              >
+                <HeroWordmark />
+              </div>
+              <p className="landing-hero__sub">
+                Find your crew. Play your sport.
+              </p>
+              <div className="landing-hero__actions">
+                <button type="button" className="landing-btn" onClick={onGetStarted}>
+                  Get Started
+                </button>
+                <button type="button" className="landing-btn" onClick={scrollToProcess}>
+                  How it works
+                </button>
+              </div>
             </div>
           </div>
 
@@ -442,7 +447,7 @@ function LandingPage({
           <h2 className="landing-cta__title">Ready to play?</h2>
         </RevealItem>
         <RevealItem index={1}>
-          <p className="landing-cta__sub">Join players across India. Free to start.</p>
+          <p className="landing-cta__sub">Your next game is one tap away.</p>
         </RevealItem>
         <RevealItem index={2}>
           <button type="button" className="landing-btn landing-btn--cta" onClick={onGetStarted}>
