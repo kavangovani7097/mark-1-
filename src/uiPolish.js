@@ -102,12 +102,32 @@ export function LoadingPulse({ label, compact = false, className = '' }) {
 
 export function StepIndicator({ step, total }) {
   return (
-    <div className="app-step-indicator">
-      <span className="app-step-tag">{String(step).padStart(2, '0')}</span>
+    <div className="app-step-indicator app-step-indicator--editorial">
+      <span className="app-outline-number" aria-hidden="true">
+        {String(step).padStart(2, '0')}
+      </span>
       <span className="app-step-indicator__text">
         Step {step} of {total}
       </span>
     </div>
+  );
+}
+
+export function IndexTag({ index, className = '' }) {
+  return (
+    <span
+      className={`app-step-tag app-index-tag${className ? ` ${className}` : ''}`}
+    >
+      {String(index).padStart(2, '0')}
+    </span>
+  );
+}
+
+export function PanelEyebrow({ children }) {
+  return (
+    <p className="home__panel-eyebrow" aria-hidden="true">
+      {children}
+    </p>
   );
 }
 

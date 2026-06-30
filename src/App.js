@@ -37,7 +37,9 @@ import LandingPage from './LandingPage';
 import Toast from './Toast';
 import {
   CountUpStat,
+  IndexTag,
   LoadingPulse,
+  PanelEyebrow,
   RevealItem,
   RevealList,
   SectionDivider,
@@ -2559,6 +2561,7 @@ function App() {
 
               <div className="profile__stats">
                 <div className="profile__stat">
+                  <IndexTag index={1} className="profile__stat-tag" />
                   <CountUpStat
                     value={sessionsPlayedCount}
                     className="profile__stat-value"
@@ -2566,6 +2569,7 @@ function App() {
                   <span className="profile__stat-label">Sessions Played</span>
                 </div>
                 <div className="profile__stat">
+                  <IndexTag index={2} className="profile__stat-tag" />
                   <CountUpStat value={profileRating} className="profile__stat-value" />
                   <span className="profile__stat-label">Rating</span>
                 </div>
@@ -3845,6 +3849,9 @@ function App() {
         <main className="home__main">
           {(activeTab === 'home' || activeTab === 'instant') && (
             <div className="home__panels">
+              <p className="home__section-eyebrow">
+                {activeTab === 'home' ? 'YOUR SESSIONS' : 'INSTANT MATCHING'}
+              </p>
               <div
                 className={`home__panels-track${
                   activeTab === 'instant' ? ' home__panels-track--instant' : ''
@@ -3857,6 +3864,7 @@ function App() {
                 <article
                   className="home__session-card home__session-card--invited"
                 >
+                  <IndexTag index={index + 1} className="home__session-index" />
                   <div className="home__session-top">
                     <div className="home__session-heading">
                       <span className="home__session-badge">Invited</span>
@@ -3940,12 +3948,18 @@ function App() {
                   const isFull = session.slotsLeft <= 0;
                   const hasJoined = joinedSessionIds.includes(session.id);
                   const isJoining = joiningSessionId === session.id;
+                  const sessionNumber =
+                    invitedCards.length + sessionsToRate.length + index + 1;
                   return (
                     <RevealItem key={session.id} index={index}>
                     <article
                       className="home__session-card home__session-card--clickable"
                       onClick={() => handleOpenSession(session.id)}
                     >
+                      <IndexTag
+                        index={sessionNumber}
+                        className="home__session-index"
+                      />
                       <div className="home__session-top">
                         <div className="home__session-heading">
                           <span className="home__session-type">
@@ -4137,6 +4151,12 @@ function App() {
             </div>
           )}
         </main>
+
+        {(activeTab === 'home' || activeTab === 'instant') && (
+          <PanelEyebrow>
+            {activeTab === 'home' ? 'YOUR SESSIONS' : 'INSTANT MATCHING'}
+          </PanelEyebrow>
+        )}
 
         {activeTab === 'home' && (
           <button
