@@ -656,16 +656,20 @@ function App() {
   }, [hydrateProfileFromStorage]);
 
   const applyPostSplashRoute = useCallback(() => {
-    if (!localStorage.getItem(ONBOARDING_SEEN_KEY)) {
-      setStep('intro');
-      return;
-    }
     setStep(postSplashRouteRef.current);
   }, []);
 
   const completeIntro = useCallback(() => {
     localStorage.setItem(ONBOARDING_SEEN_KEY, 'true');
-    setStep(postSplashRouteRef.current);
+    setStep('login');
+  }, []);
+
+  const handleGetStarted = useCallback(() => {
+    if (localStorage.getItem(ONBOARDING_SEEN_KEY)) {
+      setStep('login');
+    } else {
+      setStep('intro');
+    }
   }, []);
 
   const routeAfterAuth = useCallback(() => {
@@ -687,19 +691,15 @@ function App() {
 
         if (data?.session) {
           postSplashRouteRef.current = getPostAuthStep();
-        } else if (localStorage.getItem(ONBOARDING_SEEN_KEY)) {
-          postSplashRouteRef.current = 'landing';
         } else {
-          postSplashRouteRef.current = 'login';
+          postSplashRouteRef.current = 'landing';
         }
 
         if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
           applyPostSplashRoute();
         }
       } catch {
-        postSplashRouteRef.current = localStorage.getItem(ONBOARDING_SEEN_KEY)
-          ? 'landing'
-          : 'login';
+        postSplashRouteRef.current = 'landing';
         if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
           setStep(postSplashRouteRef.current);
         }
@@ -2205,7 +2205,7 @@ function App() {
     return (
       <>
         <LandingPage
-          onGetStarted={() => setStep('login')}
+          onGetStarted={handleGetStarted}
           termsUrl={LEGAL_TERMS_URL}
           privacyUrl={LEGAL_PRIVACY_URL}
           communityUrl={LEGAL_COMMUNITY_URL}
