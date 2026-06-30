@@ -3846,12 +3846,37 @@ function App() {
           </div>
         </header>
 
-        <main className="home__main">
+        {(activeTab === 'home' || activeTab === 'instant') && (
+          <div className="home__tabs-wrap">
+            <div className="home__tabs" role="tablist" aria-label="Home views">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'home'}
+                className={`home__tab${activeTab === 'home' ? ' home__tab--active' : ''}`}
+                onClick={() => setActiveTab('home')}
+              >
+                Scheduled Sessions
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={activeTab === 'instant'}
+                className={`home__tab${activeTab === 'instant' ? ' home__tab--active' : ''}`}
+                onClick={() => setActiveTab('instant')}
+              >
+                Instant Matching
+              </button>
+            </div>
+            <p className="home__section-eyebrow">
+              {activeTab === 'home' ? 'YOUR SESSIONS' : 'INSTANT MATCHING'}
+            </p>
+          </div>
+        )}
+
+        <main className="home__main home__main--panels">
           {(activeTab === 'home' || activeTab === 'instant') && (
             <div className="home__panels">
-              <p className="home__section-eyebrow">
-                {activeTab === 'home' ? 'YOUR SESSIONS' : 'INSTANT MATCHING'}
-              </p>
               <div
                 className={`home__panels-track${
                   activeTab === 'instant' ? ' home__panels-track--instant' : ''
