@@ -386,8 +386,8 @@ function LandingPage({
         <div className="landing-problem__grid">
           <RevealItem index={0}>
             <blockquote className="landing-problem__quote">
-              <span>You want to play.</span>
-              <span>No one&apos;s free.</span>
+              <span>Ready to play.</span>
+              <span>No one&apos;s around.</span>
             </blockquote>
           </RevealItem>
           <RevealItem index={1}>
