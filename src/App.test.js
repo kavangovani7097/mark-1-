@@ -182,10 +182,10 @@ async function goToHomeScreen() {
 
 test('renders landing page before login', async () => {
   render(<App />);
-  expect(await screen.findByText('Find your crew.')).toBeInTheDocument();
-  expect(screen.getByText('Play your sport.')).toBeInTheDocument();
-  expect(screen.getAllByRole('img', { name: 'Squadr' }).length).toBeGreaterThanOrEqual(1);
+  expect(await screen.findByText('Find your crew. Play your sport.')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'SQUADR' })).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Get Started' }).length).toBeGreaterThanOrEqual(1);
+  expect(screen.getByRole('button', { name: 'How it works' })).toBeInTheDocument();
   expect(screen.queryByPlaceholderText('Phone number')).not.toBeInTheDocument();
 
   await goToLoginFromLanding();
