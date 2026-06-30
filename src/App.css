@@ -4264,16 +4264,15 @@ button:active,
 
 @media (min-width: 768px) {
   .landing-features__grid {
-    grid-template-columns: 1.15fr 1fr;
-    grid-template-rows: repeat(3, minmax(160px, auto));
-  }
-
-  .landing-features__card--span {
-    grid-row: 1 / span 3;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 .landing-features__card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
   padding: clamp(1.75rem, 3vw, 2.25rem);
   background-color: #0a0a12;
 }
@@ -4293,6 +4292,7 @@ button:active,
 }
 
 .landing-features__desc {
+  flex: 1;
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.65;

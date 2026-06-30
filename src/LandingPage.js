@@ -42,7 +42,6 @@ const FEATURES = [
     description:
       'Real-time matching. Players near you, ready to play right now.',
     icon: 'lightning',
-    span: true,
   },
   {
     id: 'sessions',
@@ -429,7 +428,7 @@ function LandingPage({
             <RevealItem
               key={feature.id}
               index={index}
-              className={`landing-features__card${feature.span ? ' landing-features__card--span' : ''}`}
+              className="landing-features__card"
             >
               <span className="landing-tag landing-tag--inline">{feature.tag}</span>
               <div className="landing-features__icon">
