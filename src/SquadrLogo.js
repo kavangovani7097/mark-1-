@@ -11,14 +11,18 @@ const logoTextStyle = {
   textShadow: 'none',
 };
 
-function SquadrLogo({ size = 'large', className = '' }) {
+function SquadrLogo({ size = 'large', className = '', markAnimated = size === 'small' }) {
   return (
     <div
       className={`squadr-logo squadr-logo--${size}${className ? ` ${className}` : ''}`}
       role="img"
       aria-label="Squadr"
     >
-      <span className="squadr-logo__mark-wrap squadr-logo__mark-wrap--breathe">
+      <span
+        className={`squadr-logo__mark-wrap squadr-logo__mark-wrap--breathe${
+          markAnimated ? ' squadr-logo__mark-wrap--orbit' : ''
+        }`}
+      >
         <svg
           className="squadr-logo__mark"
           viewBox="0 0 26 24"

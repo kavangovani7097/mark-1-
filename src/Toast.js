@@ -46,7 +46,7 @@ function Toast({ message, type = 'success', onDismiss }) {
     const enterTimer = requestAnimationFrame(() => setVisible(true));
     const dismissTimer = setTimeout(() => {
       setVisible(false);
-      setTimeout(onDismiss, 280);
+      setTimeout(onDismiss, 320);
     }, 3000);
 
     return () => {

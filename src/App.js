@@ -35,6 +35,14 @@ import SplashScreen from './SplashScreen';
 import OnboardingSlides from './OnboardingSlides';
 import LandingPage from './LandingPage';
 import Toast from './Toast';
+import {
+  CountUpStat,
+  LoadingPulse,
+  RevealItem,
+  RevealList,
+  SectionDivider,
+  StepIndicator,
+} from './uiPolish';
 import './App.css';
 
 const ONBOARDING_SEEN_KEY = 'squadr_onboarding_seen';
@@ -2217,7 +2225,7 @@ function App() {
 
   if (step === 'sessionDetail' && selectedSession) {
     return (
-      <div className="session-detail">
+      <div className="session-detail app-screen">
         <header className="session-detail__header">
           <button
             type="button"
@@ -2239,6 +2247,8 @@ function App() {
         </header>
 
         <main className="session-detail__main">
+          <RevealList>
+          <RevealItem index={0}>
           <span className="session-detail__type-pill">
             {selectedSession.sessionType.toUpperCase()}
           </span>
@@ -2250,7 +2260,11 @@ function App() {
             {selectedSession.slotsLeft} of {selectedSession.maxPlayers} slots
             remaining
           </p>
+          </RevealItem>
 
+          <SectionDivider tag="01" />
+
+          <RevealItem index={1}>
           <section className="session-detail__section">
             <h2 className="session-detail__section-title">Who&apos;s Coming</h2>
             <div className="session-detail__avatars">
@@ -2275,7 +2289,11 @@ function App() {
               ))}
             </div>
           </section>
+          </RevealItem>
 
+          <SectionDivider tag="02" />
+
+          <RevealItem index={2}>
           <section className="session-detail__section">
             <h2 className="session-detail__section-title">Group Chat</h2>
             <div className="session-detail__chat">
@@ -2291,10 +2309,14 @@ function App() {
               )}
             </div>
           </section>
+          </RevealItem>
 
+          <RevealItem index={3}>
           <button type="button" className="login__button session-detail__join">
             Join Session
           </button>
+          </RevealItem>
+          </RevealList>
         </main>
       </div>
     );
@@ -2321,7 +2343,7 @@ function App() {
     };
 
     return (
-      <div className="home home--with-nav">
+      <div className="home home--with-nav app-tab-panel">
         <header className="home__header home__header--nav profile--tab profile__header">
           <h1 className="profile__tab-title">Profile</h1>
           <button
@@ -2533,60 +2555,68 @@ function App() {
                 )}
               </div>
 
+              <SectionDivider tag="01" />
+
               <div className="profile__stats">
                 <div className="profile__stat">
-                  <span className="profile__stat-value">
-                    {sessionsPlayedCount}
-                  </span>
+                  <CountUpStat
+                    value={sessionsPlayedCount}
+                    className="profile__stat-value"
+                  />
                   <span className="profile__stat-label">Sessions Played</span>
                 </div>
                 <div className="profile__stat">
-                  <span className="profile__stat-value">{profileRating}</span>
+                  <CountUpStat value={profileRating} className="profile__stat-value" />
                   <span className="profile__stat-label">Rating</span>
                 </div>
               </div>
 
+              <SectionDivider tag="02" />
+
               <section className="profile__section profile__section--badges">
                 <h2 className="profile__section-title">Badges</h2>
-                <div className="profile__badges">
-                  {PROFILE_BADGES.map((badge) => {
+                <RevealList className="profile__badges">
+                  {PROFILE_BADGES.map((badge, index) => {
                     const earned = badge.isEarned(badgeContext);
                     return (
-                      <span
-                        key={badge.id}
-                        className={`profile__badge${
-                          earned ? '' : ' profile__badge--locked'
-                        }`}
-                        title={earned ? badge.name : badge.hint}
-                      >
-                        {!earned && (
-                          <svg
-                            className="profile__badge-lock"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            aria-hidden="true"
-                          >
-                            <rect x="5" y="11" width="14" height="10" rx="2" />
-                            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                          </svg>
-                        )}
-                        <span className="profile__badge-emoji" aria-hidden="true">
-                          {badge.emoji}
+                      <RevealItem key={badge.id} index={index}>
+                        <span
+                          className={`profile__badge${
+                            earned ? '' : ' profile__badge--locked'
+                          }`}
+                          title={earned ? badge.name : badge.hint}
+                        >
+                          {!earned && (
+                            <svg
+                              className="profile__badge-lock"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              aria-hidden="true"
+                            >
+                              <rect x="5" y="11" width="14" height="10" rx="2" />
+                              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                            </svg>
+                          )}
+                          <span className="profile__badge-emoji" aria-hidden="true">
+                            {badge.emoji}
+                          </span>
+                          <span className="profile__badge-name">{badge.name}</span>
+                          {!earned && (
+                            <span className="profile__badge-hint">{badge.hint}</span>
+                          )}
                         </span>
-                        <span className="profile__badge-name">{badge.name}</span>
-                        {!earned && (
-                          <span className="profile__badge-hint">{badge.hint}</span>
-                        )}
-                      </span>
+                      </RevealItem>
                     );
                   })}
-                </div>
+                </RevealList>
               </section>
 
               {selectedSports.length > 0 && (
-                <div className="profile__sports">
+                <>
+                  <SectionDivider />
+                  <div className="profile__sports">
                   {selectedSports.map((sport) => (
                     <span key={sport} className="profile__sport-pill">
                       {sport}
@@ -2599,7 +2629,10 @@ function App() {
                     </span>
                   ))}
                 </div>
+                </>
               )}
+
+              <SectionDivider tag="03" />
 
               <section className="profile__section">
                 <h2 className="profile__section-title">My Crew</h2>
@@ -2774,7 +2807,7 @@ function App() {
         : request.sender_name;
 
     return (
-      <div className="home home--with-nav">
+      <div className="home home--with-nav app-tab-panel">
         <main className="home__main friends-tab">
           <div className="profile__section-head">
             <h1 className="friends-tab__title">Friends</h1>
@@ -2823,53 +2856,57 @@ function App() {
                 No friends yet. Add someone by their SQUADR ID.
               </p>
             ) : (
-              <div className="friends__list">
-                {acceptedFriends.map((request) => {
+              <RevealList className="friends__list">
+                {acceptedFriends.map((request, index) => {
                   const name = friendDisplayName(request);
                   return (
-                    <div key={request.id} className="friends__card">
-                      <div className="friends__avatar">
-                        {getInitials(name)}
+                    <RevealItem key={request.id} index={index}>
+                      <div className="friends__card">
+                        <div className="friends__avatar">
+                          {getInitials(name)}
+                        </div>
+                        <span className="friends__name">
+                          {capitalize(name)}
+                        </span>
                       </div>
-                      <span className="friends__name">
-                        {capitalize(name)}
-                      </span>
-                    </div>
+                    </RevealItem>
                   );
                 })}
-              </div>
+              </RevealList>
             )
           ) : pendingIncoming.length === 0 ? (
             <p className="profile__empty">No pending requests</p>
           ) : (
-            <div className="friends__list">
-              {pendingIncoming.map((request) => (
-                <div key={request.id} className="friends__card">
-                  <div className="friends__avatar">
-                    {getInitials(request.sender_name)}
+            <RevealList className="friends__list">
+              {pendingIncoming.map((request, index) => (
+                <RevealItem key={request.id} index={index}>
+                  <div className="friends__card">
+                    <div className="friends__avatar">
+                      {getInitials(request.sender_name)}
+                    </div>
+                    <span className="friends__name">
+                      {capitalize(request.sender_name)}
+                    </span>
+                    <div className="friends__actions">
+                      <button
+                        type="button"
+                        className="friends__decline"
+                        onClick={() => handleDeclineFriend(request)}
+                      >
+                        Decline
+                      </button>
+                      <button
+                        type="button"
+                        className="friends__accept"
+                        onClick={() => handleAcceptFriend(request)}
+                      >
+                        Accept
+                      </button>
+                    </div>
                   </div>
-                  <span className="friends__name">
-                    {capitalize(request.sender_name)}
-                  </span>
-                  <div className="friends__actions">
-                    <button
-                      type="button"
-                      className="friends__decline"
-                      onClick={() => handleDeclineFriend(request)}
-                    >
-                      Decline
-                    </button>
-                    <button
-                      type="button"
-                      className="friends__accept"
-                      onClick={() => handleAcceptFriend(request)}
-                    >
-                      Accept
-                    </button>
-                  </div>
-                </div>
+                </RevealItem>
               ))}
-            </div>
+            </RevealList>
           )}
         </main>
 
@@ -2962,7 +2999,7 @@ function App() {
       );
 
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3126,7 +3163,7 @@ function App() {
       userLat != null && userLng != null && !instantLocationLoading;
 
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3153,7 +3190,7 @@ function App() {
         </header>
 
         <main className="create__main">
-          <p className="instant__step">Step 1 of 5</p>
+          <StepIndicator step={1} total={5} />
           <h2 className="instant__question">Where are you playing?</h2>
 
           <div className="instant__location-cards">
@@ -3172,7 +3209,7 @@ function App() {
               </span>
               <span className="instant__location-card-title">Use Current Location</span>
               {instantLocationMode === 'current' && instantLocationLoading && (
-                <span className="instant__location-status">Finding location...</span>
+                <LoadingPulse compact label="Finding location..." />
               )}
               {instantLocationMode === 'current' &&
                 !instantLocationLoading &&
@@ -3239,7 +3276,7 @@ function App() {
 
   if (step === 'instantSport') {
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3263,7 +3300,7 @@ function App() {
         </header>
 
         <main className="create__main">
-          <p className="instant__step">Step 2 of 5</p>
+          <StepIndicator step={2} total={5} />
           <h2 className="instant__question">What do you want to play?</h2>
           <div className="login__sports-grid create__sports-grid">
             {instantSportOptions.map((name) => {
@@ -3289,7 +3326,7 @@ function App() {
 
   if (step === 'instantRadius') {
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3313,7 +3350,7 @@ function App() {
         </header>
 
         <main className="create__main">
-          <p className="instant__step">Step 3 of 5</p>
+          <StepIndicator step={3} total={5} />
           <h2 className="instant__question">How far should we search?</h2>
           <div className="instant__radius">
             <p className="instant__radius-value">{radiusKm} km radius</p>
@@ -3346,7 +3383,7 @@ function App() {
 
   if (step === 'instantCount') {
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3370,7 +3407,7 @@ function App() {
         </header>
 
         <main className="create__main">
-          <p className="instant__step">Step 4 of 5</p>
+          <StepIndicator step={4} total={5} />
           <h2 className="instant__question">How many players do you need?</h2>
           <div className="instant__count-grid">
             {PLAYER_COUNT_OPTIONS.map((count) => {
@@ -3395,7 +3432,7 @@ function App() {
 
   if (step === 'instantBroadcast') {
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3421,7 +3458,7 @@ function App() {
         <main className="create__main">
           <form className="create__form" onSubmit={handleBroadcastRequest}>
             <section className="create__section">
-              <p className="instant__step">Step 5 of 5</p>
+              <StepIndicator step={5} total={5} />
               <h2 className="instant__question">Ready to broadcast?</h2>
               <p className="instant__broadcast-location">
                 {instantLocationLabel || instantLocationPref}
@@ -3453,7 +3490,7 @@ function App() {
 
   if (step === 'instantExisting') {
     return (
-      <div className="create">
+      <div className="create app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3573,7 +3610,7 @@ function App() {
 
   if (step === 'groupChat') {
     return (
-      <div className="chat">
+      <div className="chat app-screen">
         <header className="chat__header">
           <button
             type="button"
@@ -3608,11 +3645,12 @@ function App() {
           {chatMessages.length === 0 ? (
             <p className="chat__empty">Say hello to your new crew!</p>
           ) : (
-            chatMessages.map((message) => {
+            <RevealList>
+            {chatMessages.map((message, index) => {
               const isMine = message.sender_name === firstName;
               return (
+                <RevealItem key={message.id} index={index}>
                 <div
-                  key={message.id}
                   className={`chat__message${isMine ? ' chat__message--mine' : ''}`}
                 >
                   {!isMine && (
@@ -3622,8 +3660,10 @@ function App() {
                   )}
                   <p className="chat__message-text">{message.text}</p>
                 </div>
+                </RevealItem>
               );
-            })
+            })}
+            </RevealList>
           )}
         </main>
 
@@ -3659,7 +3699,7 @@ function App() {
     ];
 
     return (
-      <div className="pro">
+      <div className="pro app-screen">
         <header className="create__header">
           <button
             type="button"
@@ -3783,7 +3823,7 @@ function App() {
     );
 
     return (
-      <div className="home home--with-nav">
+      <div className="home home--with-nav app-tab-panel">
         <header className="home__header home__header--nav">
           <SquadrLogo size="small" />
           <div className="home__header-actions">
@@ -3811,10 +3851,10 @@ function App() {
                 }`}
               >
                 <div className="home__panel">
-                  <div className="home__sessions">
-              {invitedCards.map(({ invite, session }) => (
+                  <RevealList className="home__sessions">
+              {invitedCards.map(({ invite, session }, index) => (
+                <RevealItem key={`invite-${invite.id}`} index={index}>
                 <article
-                  key={`invite-${invite.id}`}
                   className="home__session-card home__session-card--invited"
                 >
                   <div className="home__session-top">
@@ -3842,10 +3882,12 @@ function App() {
                     </button>
                   </div>
                 </article>
+                </RevealItem>
               ))}
 
-              {sessionsToRate.map((session) => (
-                <article key={`rate-${session.id}`} className="rate-card">
+              {sessionsToRate.map((session, index) => (
+                <RevealItem key={`rate-${session.id}`} index={index}>
+                <article className="rate-card">
                   <div className="rate-card__info">
                     <span className="rate-card__title">Rate your crew</span>
                     <span className="rate-card__sub">
@@ -3872,10 +3914,11 @@ function App() {
                     </button>
                   </div>
                 </article>
+                </RevealItem>
               ))}
 
               {sessionsLoading ? (
-                <p className="home__loading">Loading sessions...</p>
+                <LoadingPulse label="Loading sessions..." />
               ) : sessionsWithoutInvites.length === 0 &&
                 invitedCards.length === 0 ? (
                 <div className="home__empty">
@@ -3893,13 +3936,13 @@ function App() {
                   <p>No upcoming sessions near you. Be the first to create one!</p>
                 </div>
               ) : (
-                sessionsWithoutInvites.map((session) => {
+                sessionsWithoutInvites.map((session, index) => {
                   const isFull = session.slotsLeft <= 0;
                   const hasJoined = joinedSessionIds.includes(session.id);
                   const isJoining = joiningSessionId === session.id;
                   return (
+                    <RevealItem key={session.id} index={index}>
                     <article
-                      key={session.id}
                       className="home__session-card home__session-card--clickable"
                       onClick={() => handleOpenSession(session.id)}
                     >
@@ -3938,10 +3981,11 @@ function App() {
                         {session.slotsLeft} slots left
                       </p>
                     </article>
+                    </RevealItem>
                   );
                 })
               )}
-            </div>
+                  </RevealList>
                 </div>
                 <div className="home__panel">
             <div className="find">
@@ -4036,7 +4080,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="find__players">
+              <RevealList className="find__players">
                 {(() => {
                   const visibleFindPlayers = findPlayers.filter((player) => {
                     if (!isDisplayablePlayerName(player.name)) return false;
@@ -4046,7 +4090,7 @@ function App() {
                   });
 
                   if (findPlayersLoading) {
-                    return null;
+                    return <LoadingPulse label="Searching..." />;
                   }
 
                   if (visibleFindPlayers.length === 0) {
@@ -4057,8 +4101,9 @@ function App() {
                     );
                   }
 
-                  return visibleFindPlayers.map((player) => (
-                    <article key={player.squadr_id} className="find__player-card">
+                  return visibleFindPlayers.map((player, index) => (
+                    <RevealItem key={player.squadr_id} index={index}>
+                    <article className="find__player-card">
                       <div className="find__player-top">
                         <div className="find__player-heading">
                           <h2 className="find__player-name">
@@ -4082,9 +4127,10 @@ function App() {
                         </div>
                       )}
                     </article>
+                    </RevealItem>
                   ));
                 })()}
-              </div>
+              </RevealList>
             </div>
                 </div>
               </div>
