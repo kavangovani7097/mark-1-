@@ -70,7 +70,6 @@ jest.mock('./supabase', () => ({
 
 beforeEach(() => {
   localStorage.clear();
-  localStorage.setItem('squadr_onboarding_seen', 'true');
   supabase.auth.signInWithOAuth.mockResolvedValue({ error: null });
   supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
   supabase.auth.onAuthStateChange.mockReturnValue({

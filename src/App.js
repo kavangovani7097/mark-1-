@@ -32,7 +32,6 @@ import {
   upsertUser,
 } from './friends';
 import SplashScreen from './SplashScreen';
-import OnboardingSlides from './OnboardingSlides';
 import LandingPage from './LandingPage';
 import Toast from './Toast';
 import {
@@ -47,7 +46,6 @@ import {
 } from './uiPolish';
 import './App.css';
 
-const ONBOARDING_SEEN_KEY = 'squadr_onboarding_seen';
 const PWA_INSTALLED_KEY = 'squadr_pwa_installed';
 const PWA_ANDROID_DISMISSED_KEY = 'squadr_pwa_prompt_dismissed';
 const PWA_IOS_DISMISSED_KEY = 'squadr_ios_prompt_dismissed';
@@ -701,22 +699,13 @@ function App() {
     setStep(postSplashRouteRef.current);
   }, []);
 
-  const completeIntro = useCallback(() => {
-    localStorage.setItem(ONBOARDING_SEEN_KEY, 'true');
-    setStep('login');
-  }, []);
-
   const handleGetStarted = useCallback(() => {
-    if (localStorage.getItem(ONBOARDING_SEEN_KEY)) {
-      setStep('login');
-    } else {
-      setStep('intro');
-    }
+    setStep('login');
   }, []);
 
   const routeAfterAuth = useCallback(() => {
     const nextStep = getPostAuthStep();
-    if (stepRef.current === 'splash' || stepRef.current === 'intro') {
+    if (stepRef.current === 'splash') {
       postSplashRouteRef.current = nextStep;
       return;
     }
@@ -737,12 +726,12 @@ function App() {
           postSplashRouteRef.current = 'landing';
         }
 
-        if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
+        if (stepRef.current !== 'splash') {
           applyPostSplashRoute();
         }
       } catch {
         postSplashRouteRef.current = 'landing';
-        if (stepRef.current !== 'splash' && stepRef.current !== 'intro') {
+        if (stepRef.current !== 'splash') {
           setStep(postSplashRouteRef.current);
         }
       }
@@ -2245,15 +2234,6 @@ function App() {
     return (
       <>
         <SplashScreen exiting={splashExiting} />
-        {toastNode}
-      </>
-    );
-  }
-
-  if (step === 'intro') {
-    return (
-      <>
-        <OnboardingSlides onComplete={completeIntro} onSkip={completeIntro} />
         {toastNode}
       </>
     );
