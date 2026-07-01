@@ -4240,7 +4240,12 @@ button:active,
   --landing-text-muted: #8888a0;
   --landing-border: rgba(255, 255, 255, 0.08);
   scroll-behavior: smooth;
-  background-color: #0a0a12;
+  background: linear-gradient(
+    180deg,
+    var(--squadr-bg-top) 0%,
+    var(--squadr-bg) 45%,
+    var(--squadr-bg-bottom) 100%
+  );
   color: #ffffff;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   overflow-x: hidden;
@@ -4278,7 +4283,7 @@ button:active,
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(10, 10, 18, 0.82);
+  background: color-mix(in srgb, var(--squadr-bg) 88%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -4349,11 +4354,17 @@ button:active,
 
 /* —— Hero —— */
 .landing-hero {
-  min-height: calc(100vh - 3.75rem);
-  min-height: calc(100dvh - 3.75rem);
   display: flex;
   align-items: center;
-  padding-block: clamp(3rem, 8vh, 5rem);
+  padding-block: clamp(2.5rem, 6vh, 4rem);
+}
+
+@media (min-width: 900px) {
+  .landing-hero {
+    min-height: calc(100vh - 3.75rem);
+    min-height: calc(100dvh - 3.75rem);
+    padding-block: clamp(3rem, 8vh, 5rem);
+  }
 }
 
 .landing-hero__grid {
@@ -4536,6 +4547,12 @@ button:active,
 }
 
 /* —— Sections —— */
+.landing-section,
+.landing-hero,
+.landing-footer {
+  background: transparent;
+}
+
 .landing-section {
   position: relative;
   padding-block: var(--landing-section-y);
@@ -4556,13 +4573,6 @@ button:active,
 }
 
 /* —— Problem —— */
-.landing-problem {
-  background: linear-gradient(
-    180deg,
-    rgba(123, 45, 66, 0.06) 0%,
-    rgba(10, 10, 18, 0) 100%
-  );
-}
 
 /* —— Process —— */
 .landing-process__list {
@@ -4643,22 +4653,21 @@ button:active,
   flex-direction: column;
   height: 100%;
   padding: clamp(1.5rem, 3vw, 2rem);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--landing-border);
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 0;
-  box-shadow: var(--squadr-card-shadow);
+  box-shadow: none;
   transition:
     transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.3s ease,
-    box-shadow 0.3s ease;
+    background 0.3s ease;
 }
 
 .landing-features__card:hover {
   transform: translateY(-4px);
-  border-color: rgba(201, 162, 75, 0.28);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 16px 40px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(201, 162, 75, 0.22);
+  box-shadow: none;
 }
 
 .landing-features__tag {
@@ -4694,15 +4703,6 @@ button:active,
 }
 
 /* —— CTA —— */
-.landing-cta {
-  background: linear-gradient(
-    180deg,
-    rgba(10, 10, 18, 0) 0%,
-    rgba(123, 45, 66, 0.08) 50%,
-    rgba(10, 10, 18, 0) 100%
-  );
-}
-
 .landing-cta__inner {
   display: flex;
   flex-direction: column;
