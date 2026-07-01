@@ -4428,24 +4428,25 @@ button:active,
   );
 }
 
-.landing-section-header--center .landing-section-eyebrow {
-  justify-content: center;
-}
-
-.landing-section-header--center .landing-section-eyebrow::before {
-  width: 1.5rem;
-}
-
-.landing-section-header--center .landing-section-eyebrow::after {
+.landing-section-eyebrow::after {
   content: '';
   flex-shrink: 0;
-  width: 1.5rem;
+  width: 2rem;
   height: 1px;
   background: linear-gradient(
     90deg,
     rgba(123, 45, 66, 0.55),
     var(--squadr-gold)
   );
+}
+
+.landing-section-header--center .landing-section-eyebrow {
+  justify-content: center;
+}
+
+.landing-section-header--center .landing-section-eyebrow::before,
+.landing-section-header--center .landing-section-eyebrow::after {
+  width: 1.5rem;
 }
 
 .landing-section-title {
