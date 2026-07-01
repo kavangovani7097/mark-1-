@@ -493,7 +493,6 @@ function LandingPage({
               @squadr_app
             </a>
           </nav>
-          <p className="landing-footer__copy">© 2026 SQUADR · Ahmedabad, India</p>
         </div>
       </footer>
     </div>
