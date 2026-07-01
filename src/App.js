@@ -590,9 +590,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    const otpRef = otpCooldownRef.current;
+    const emailRef = emailCooldownRef.current;
+
     return () => {
-      if (otpCooldownRef.current) clearInterval(otpCooldownRef.current);
-      if (emailCooldownRef.current) clearInterval(emailCooldownRef.current);
+      if (otpRef) clearInterval(otpRef);
+      if (emailRef) clearInterval(emailRef);
     };
   }, []);
 
