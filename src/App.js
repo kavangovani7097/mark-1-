@@ -485,6 +485,9 @@ function App() {
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [loginError, setLoginError] = useState('');
   const [otpError, setOtpError] = useState('');
+  const [onboardingError, setOnboardingError] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [emailCooldown, setEmailCooldown] = useState(0);
   const [sessions, setSessions] = useState([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [createSessionError, setCreateSessionError] = useState('');
@@ -549,6 +552,8 @@ function App() {
 
   const inputRefs = useRef([]);
   const fileInputRef = useRef(null);
+  const otpCooldownRef = useRef(null);
+  const emailCooldownRef = useRef(null);
   const closedRequestRef = useRef(false);
   const postSplashRouteRef = useRef('landing');
   const stepRef = useRef(step);
@@ -565,6 +570,30 @@ function App() {
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
+  }, []);
+
+  const startCooldown = useCallback((setter, ref, seconds = 60) => {
+    if (ref.current) {
+      clearInterval(ref.current);
+    }
+    setter(seconds);
+    ref.current = setInterval(() => {
+      setter((prev) => {
+        if (prev <= 1) {
+          clearInterval(ref.current);
+          ref.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (otpCooldownRef.current) clearInterval(otpCooldownRef.current);
+      if (emailCooldownRef.current) clearInterval(emailCooldownRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -888,9 +917,10 @@ function App() {
 
     if (error) {
       setLoginError(error.message);
+    } else {
+      startCooldown(setOtpCooldown, otpCooldownRef);
+      setStep('otp');
     }
-
-    setStep('otp');
   };
 
   const handleContinueWithEmail = () => {
@@ -912,6 +942,7 @@ function App() {
       setLoginError(error.message);
     } else {
       setEmailSent(true);
+      startCooldown(setEmailCooldown, emailCooldownRef);
     }
   };
 
@@ -976,7 +1007,21 @@ function App() {
 
   const handleOnboardingContinue = (e) => {
     e.preventDefault();
+    if (!firstName.trim() || !age.trim() || !city) {
+      setOnboardingError('Please fill in your first name, age, and city.');
+      return;
+    }
+    setOnboardingError('');
     setStep('sports');
+  };
+
+  const handleAgeChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    if (!raw) {
+      setAge('');
+      return;
+    }
+    setAge(String(Math.min(99, parseInt(raw, 10))));
   };
 
   const toggleSport = (name) => {
@@ -4292,6 +4337,25 @@ function App() {
     return (
       <div className="login">
         <div className="login__content">
+          <div className="login__topbar">
+            <button
+              type="button"
+              className="login__back"
+              onClick={() => setStep('otp')}
+              aria-label="Go back"
+            >
+              <svg
+                className="login__back-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          </div>
           <h1 className="login__logo">
             <SquadrLogo size="large" />
           </h1>
@@ -4303,22 +4367,36 @@ function App() {
               className="login__input"
               placeholder="First Name"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (onboardingError) setOnboardingError('');
+              }}
               autoComplete="given-name"
+              required
             />
             <input
               type="number"
               className="login__input"
               placeholder="Age"
               value={age}
-              onChange={(e) => setAge(e.target.value)}
+              onChange={(e) => {
+                handleAgeChange(e);
+                if (onboardingError) setOnboardingError('');
+              }}
               min="1"
+              max="99"
               inputMode="numeric"
+              required
             />
             <select
               className={`login__select${city ? '' : ' login__select--placeholder'}`}
               value={city}
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => {
+                setCity(e.target.value);
+                if (onboardingError) setOnboardingError('');
+              }}
+              aria-label="City"
+              required
             >
               <option value="" disabled>
                 City
@@ -4329,6 +4407,9 @@ function App() {
                 </option>
               ))}
             </select>
+            {onboardingError && (
+              <p className="login__error">{onboardingError}</p>
+            )}
             <button type="submit" className="login__button">
               Continue
             </button>
@@ -4405,8 +4486,12 @@ function App() {
             autoComplete="tel"
             disabled={!termsAccepted}
           />
-          <button type="submit" className="login__button" disabled={!termsAccepted}>
-            Send OTP
+          <button
+            type="submit"
+            className="login__button"
+            disabled={!termsAccepted || otpCooldown > 0}
+          >
+            {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Send OTP'}
           </button>
         </form>
 
@@ -4426,8 +4511,14 @@ function App() {
                 autoComplete="email"
                 disabled={!termsAccepted}
               />
-              <button type="submit" className="login__button" disabled={!termsAccepted}>
-                Send Magic Link
+              <button
+                type="submit"
+                className="login__button"
+                disabled={!termsAccepted || emailCooldown > 0}
+              >
+                {emailCooldown > 0
+                  ? `Resend in ${emailCooldown}s`
+                  : 'Send Magic Link'}
               </button>
               {emailSent && (
                 <p className="login__hint">
