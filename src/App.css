@@ -4239,18 +4239,64 @@ button:active,
   --landing-section-y: clamp(4.5rem, 9vw, 7rem);
   --landing-text-muted: #8888a0;
   --landing-border: rgba(255, 255, 255, 0.08);
+  --landing-navy-deep: #050510;
+  --landing-navy-mid: #0a0c18;
+  --landing-navy-soft: #12142a;
+  --landing-navy-glow: rgba(36, 44, 96, 0.55);
+  --landing-wine-glow: rgba(123, 45, 66, 0.32);
   scroll-behavior: smooth;
-  background: linear-gradient(
-    180deg,
-    var(--squadr-bg-top) 0%,
-    var(--squadr-bg) 45%,
-    var(--squadr-bg-bottom) 100%
-  );
+  background-color: var(--landing-navy-deep);
+  background-image:
+    linear-gradient(125deg, rgba(123, 45, 66, 0.14) 0%, transparent 38%),
+    linear-gradient(305deg, rgba(36, 44, 96, 0.22) 0%, transparent 42%),
+    linear-gradient(
+      180deg,
+      #050510 0%,
+      #070818 16%,
+      #0a0c18 38%,
+      #0c0e1c 62%,
+      #101224 82%,
+      #12142a 100%
+    );
   color: #ffffff;
   font-family: 'Space Grotesk', system-ui, sans-serif;
   overflow-x: hidden;
   position: relative;
   isolation: isolate;
+}
+
+.landing::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 70vmin 55vmin at 92% 8%,
+      var(--landing-wine-glow) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      ellipse 65vmin 50vmin at 6% 88%,
+      var(--landing-navy-glow) 0%,
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 55vmin 45vmin at 50% 102%,
+      rgba(123, 45, 66, 0.16) 0%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 45vmin 40vmin at 0% 42%,
+      rgba(24, 30, 72, 0.42) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 38vmin 32vmin at 100% 58%,
+      rgba(201, 162, 75, 0.06) 0%,
+      transparent 55%
+    );
 }
 
 .landing::before {
@@ -4259,7 +4305,7 @@ button:active,
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.05;
   mix-blend-mode: overlay;
   background-image: var(--squadr-noise-texture);
   background-repeat: repeat;
@@ -4283,9 +4329,9 @@ button:active,
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--squadr-bg) 88%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(5, 5, 16, 0.72);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
 }
 
 .landing-nav__inner {
@@ -4455,6 +4501,10 @@ button:active,
 .landing-orbit__svg {
   width: 100%;
   height: 100%;
+}
+
+.landing-orbit__ring {
+  stroke: rgba(36, 44, 96, 0.4);
 }
 
 .landing-orbit__spin {
@@ -4653,21 +4703,32 @@ button:active,
   flex-direction: column;
   height: 100%;
   padding: clamp(1.5rem, 3vw, 2rem);
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(
+    145deg,
+    rgba(36, 44, 96, 0.12) 0%,
+    rgba(123, 45, 66, 0.06) 100%
+  );
+  border: 1px solid rgba(123, 45, 66, 0.14);
   border-radius: 0;
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   transition:
     transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.3s ease,
-    background 0.3s ease;
+    background 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .landing-features__card:hover {
   transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(201, 162, 75, 0.22);
-  box-shadow: none;
+  background: linear-gradient(
+    145deg,
+    rgba(36, 44, 96, 0.18) 0%,
+    rgba(123, 45, 66, 0.1) 100%
+  );
+  border-color: rgba(201, 162, 75, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px rgba(123, 45, 66, 0.12);
 }
 
 .landing-features__tag {
