@@ -18,7 +18,7 @@ const STEPS = [
     target: 1,
     title: 'Set your sport and location',
     description:
-      'Tell SQUADR what you play and where you are, whether that is current GPS or a venue you choose.',
+      'Tell SQUADR what you play and where you are — current GPS or a venue you choose.',
   },
   {
     target: 2,
@@ -201,14 +201,6 @@ function HeroWordmark() {
   );
 }
 
-function EdgeLabel({ children, side = 'left' }) {
-  return (
-    <div className={`landing-edge landing-edge--${side}`} aria-hidden="true">
-      {children}
-    </div>
-  );
-}
-
 function useReveal(threshold = 0.12) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -261,6 +253,19 @@ function RevealItem({ index, children, className = '' }) {
   );
 }
 
+function SectionHeader({ eyebrow, title, lead, align = 'left', id }) {
+  return (
+    <header
+      id={id}
+      className={`landing-section-header landing-section-header--${align}`}
+    >
+      {eyebrow ? <p className="landing-section-eyebrow">{eyebrow}</p> : null}
+      {title ? <h2 className="landing-section-title">{title}</h2> : null}
+      {lead ? <p className="landing-section-lead">{lead}</p> : null}
+    </header>
+  );
+}
+
 function CountUpNumber({ target, active }) {
   const [value, setValue] = useState(0);
 
@@ -288,14 +293,6 @@ function CountUpNumber({ target, active }) {
     <span className="landing-process__number" aria-hidden="true">
       {String(value).padStart(2, '0')}
     </span>
-  );
-}
-
-function SectionDivider({ tag }) {
-  return (
-    <div className="landing-divider">
-      {tag ? <span className="landing-tag">{tag}</span> : null}
-    </div>
   );
 }
 
@@ -345,12 +342,24 @@ function LandingPage({
 
   return (
     <div className="landing">
+      <header className="landing-nav">
+        <div className="landing__inner landing-nav__inner">
+          <div className="landing-nav__brand">
+            <SquadrDots size={20} />
+            <span className="landing-nav__name">SQUADR</span>
+          </div>
+          <button type="button" className="landing-btn landing-btn--primary landing-btn--sm" onClick={onGetStarted}>
+            Get Started
+          </button>
+        </div>
+      </header>
+
       <section className="landing-hero" ref={heroRef}>
-        <div className="landing-hero__grid">
+        <div className="landing__inner landing-hero__grid">
           <div className="landing-hero__copy">
             <div className="landing-hero__copy-stack">
               <p
-                className="landing-eyebrow"
+                className="landing-section-eyebrow landing-hero__eyebrow"
                 style={{ transform: `translateY(${parallax.eyebrow}px)` }}
               >
                 PLAY · CONNECT · REPEAT
@@ -365,10 +374,10 @@ function LandingPage({
                 Find your crew. Play your sport.
               </p>
               <div className="landing-hero__actions">
-                <button type="button" className="landing-btn" onClick={onGetStarted}>
+                <button type="button" className="landing-btn landing-btn--primary" onClick={onGetStarted}>
                   Get Started
                 </button>
-                <button type="button" className="landing-btn" onClick={scrollToProcess}>
+                <button type="button" className="landing-btn landing-btn--ghost" onClick={scrollToProcess}>
                   How it works
                 </button>
               </div>
@@ -382,22 +391,13 @@ function LandingPage({
       </section>
 
       <RevealSection className="landing-problem">
-        <SectionDivider tag="01" />
-        <div className="landing-problem__grid">
-          <RevealItem index={0}>
-            <blockquote className="landing-problem__quote">
-              <span>Ready to play.</span>
-              <span>No one&apos;s around.</span>
-            </blockquote>
-          </RevealItem>
-          <RevealItem index={1}>
-            <p className="landing-problem__body">
-              Finding players shouldn&apos;t be harder than playing the game.
-              SQUADR makes it effortless.
-            </p>
-          </RevealItem>
+        <div className="landing__inner">
+          <SectionHeader
+            eyebrow="The challenge"
+            title="Ready to play. No one's around."
+            lead="Finding players shouldn't be harder than playing the game. SQUADR makes it effortless."
+          />
         </div>
-        <SectionDivider tag="" />
       </RevealSection>
 
       <section
@@ -405,13 +405,18 @@ function LandingPage({
         ref={processReveal.ref}
         className={`landing-section landing-process${processReveal.visible ? ' landing-section--visible' : ''}`}
       >
-        <EdgeLabel side="left">THE PROCESS</EdgeLabel>
-        <div className="landing-process__layout">
+        <div className="landing__inner">
+          <SectionHeader
+            eyebrow="How it works"
+            title="Three steps to your next game"
+            lead="From open app to on-court — built for players who actually show up."
+          />
+
           <ol className="landing-process__list">
             {STEPS.map((step, index) => (
               <li key={step.title} className="landing-process__item">
                 <CountUpNumber target={step.target} active={processReveal.visible} />
-                <RevealItem index={index * 2 + 1} className="landing-process__content">
+                <RevealItem index={index} className="landing-process__content">
                   <h3 className="landing-process__title">{step.title}</h3>
                   <p className="landing-process__desc">{step.description}</p>
                 </RevealItem>
@@ -422,63 +427,74 @@ function LandingPage({
       </section>
 
       <RevealSection className="landing-features" id="landing-features">
-        <p className="landing-section-label">CAPABILITIES</p>
-        <div className="landing-features__grid">
-          {FEATURES.map((feature, index) => (
-            <RevealItem
-              key={feature.id}
-              index={index}
-              className="landing-features__card"
-            >
-              <span className="landing-tag landing-tag--inline">{feature.tag}</span>
-              <div className="landing-features__icon">
-                <FeatureIcon type={feature.icon} size={24} />
-              </div>
-              <h3 className="landing-features__title">{feature.title}</h3>
-              <p className="landing-features__desc">{feature.description}</p>
-            </RevealItem>
-          ))}
+        <div className="landing__inner">
+          <SectionHeader
+            eyebrow="Capabilities"
+            title="Everything you need to play"
+            lead="Instant matching, scheduled sessions, your crew, and Pro — one app, one squad."
+          />
+
+          <div className="landing-features__grid">
+            {FEATURES.map((feature, index) => (
+              <RevealItem
+                key={feature.id}
+                index={index}
+                className="landing-features__card"
+              >
+                <span className="landing-features__tag">{feature.tag}</span>
+                <div className="landing-features__icon">
+                  <FeatureIcon type={feature.icon} size={24} />
+                </div>
+                <h3 className="landing-features__title">{feature.title}</h3>
+                <p className="landing-features__desc">{feature.description}</p>
+              </RevealItem>
+            ))}
+          </div>
         </div>
       </RevealSection>
 
       <RevealSection className="landing-cta" as="section">
-        <RevealItem index={0}>
-          <h2 className="landing-cta__title">Ready to play?</h2>
-        </RevealItem>
-        <RevealItem index={1}>
-          <p className="landing-cta__sub">Your next game is one tap away.</p>
-        </RevealItem>
-        <RevealItem index={2}>
-          <button type="button" className="landing-btn landing-btn--cta" onClick={onGetStarted}>
-            Get Started
-          </button>
-        </RevealItem>
+        <div className="landing__inner landing-cta__inner">
+          <SectionHeader
+            eyebrow="Join SQUADR"
+            title="Ready to play?"
+            lead="Your next game is one tap away."
+            align="center"
+          />
+          <RevealItem index={1}>
+            <button type="button" className="landing-btn landing-btn--primary landing-btn--cta" onClick={onGetStarted}>
+              Get Started
+            </button>
+          </RevealItem>
+        </div>
       </RevealSection>
 
       <footer className="landing-footer">
-        <SquadrDots size={22} />
-        <nav className="landing-footer__links legal-links legal-links--footer" aria-label="Legal">
-          <a href={termsUrl} target="_blank" rel="noopener noreferrer">
-            Terms
-          </a>
-          <span aria-hidden="true"> · </span>
-          <a href={privacyUrl} target="_blank" rel="noopener noreferrer">
-            Privacy
-          </a>
-          <span aria-hidden="true"> · </span>
-          <a href={communityUrl} target="_blank" rel="noopener noreferrer">
-            Community
-          </a>
-          <span aria-hidden="true"> · </span>
-          <a
-            href="https://www.instagram.com/squadr_app/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            @squadr_app
-          </a>
-        </nav>
-        <p className="landing-footer__copy">© 2026 SQUADR · Ahmedabad, India</p>
+        <div className="landing__inner landing-footer__inner">
+          <SquadrDots size={22} />
+          <nav className="landing-footer__links legal-links legal-links--footer" aria-label="Legal">
+            <a href={termsUrl} target="_blank" rel="noopener noreferrer">
+              Terms
+            </a>
+            <span aria-hidden="true"> · </span>
+            <a href={privacyUrl} target="_blank" rel="noopener noreferrer">
+              Privacy
+            </a>
+            <span aria-hidden="true"> · </span>
+            <a href={communityUrl} target="_blank" rel="noopener noreferrer">
+              Community
+            </a>
+            <span aria-hidden="true"> · </span>
+            <a
+              href="https://www.instagram.com/squadr_app/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              @squadr_app
+            </a>
+          </nav>
+          <p className="landing-footer__copy">© 2026 SQUADR · Ahmedabad, India</p>
+        </div>
       </footer>
     </div>
   );
