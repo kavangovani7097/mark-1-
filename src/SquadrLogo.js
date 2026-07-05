@@ -1,17 +1,21 @@
-const SQUADR_WINE = '#7B2D42';
-const SQUADR_WHITE = '#FFFFFF';
-
-const logoTextStyle = {
-  color: SQUADR_WHITE,
-  WebkitTextFillColor: SQUADR_WHITE,
-  background: 'none',
-  backgroundImage: 'none',
-  mixBlendMode: 'normal',
-  opacity: 1,
-  textShadow: 'none',
+const THEMES = {
+  dark: { text: '#FFFFFF', dot: '#7B2D42' },
+  light: { text: '#1A3636', dot: '#F95738' }
 };
 
-function SquadrLogo({ size = 'large', className = '', markAnimated = size === 'small' }) {
+function SquadrLogo({ size = 'large', className = '', markAnimated = size === 'small', theme = 'light' }) {
+  const currentTheme = THEMES[theme] || THEMES.dark;
+
+  const logoTextStyle = {
+    color: currentTheme.text,
+    WebkitTextFillColor: currentTheme.text,
+    background: 'none',
+    backgroundImage: 'none',
+    mixBlendMode: 'normal',
+    opacity: 1,
+    textShadow: 'none',
+  };
+
   return (
     <div
       className={`squadr-logo squadr-logo--${size}${className ? ` ${className}` : ''}`}
@@ -30,9 +34,9 @@ function SquadrLogo({ size = 'large', className = '', markAnimated = size === 's
           aria-hidden="true"
           shapeRendering="geometricPrecision"
         >
-          <circle cx="13" cy="6" r="5" fill={SQUADR_WINE} />
-          <circle cx="6" cy="17" r="5" fill={SQUADR_WINE} />
-          <circle cx="20" cy="17" r="5" fill={SQUADR_WINE} />
+          <circle cx="13" cy="6" r="5" fill={currentTheme.dot} />
+          <circle cx="6" cy="17" r="5" fill={currentTheme.dot} />
+          <circle cx="20" cy="17" r="5" fill={currentTheme.dot} />
         </svg>
       </span>
       <span className="squadr-logo__text" style={logoTextStyle}>

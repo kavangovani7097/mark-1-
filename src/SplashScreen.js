@@ -16,11 +16,11 @@ function SplashScreen({ exiting = false }) {
           aria-hidden="true"
           shapeRendering="geometricPrecision"
         >
-          <circle className="splash__dot splash__dot--1" cx="13" cy="6" r="5" fill={SQUADR_WINE} />
-          <circle className="splash__dot splash__dot--2" cx="6" cy="17" r="5" fill={SQUADR_WINE} />
-          <circle className="splash__dot splash__dot--3" cx="20" cy="17" r="5" fill={SQUADR_WINE} />
+          <circle className="splash__dot splash__dot--1" cx="13" cy="6" r="5" fill="#F95738" />
+          <circle className="splash__dot splash__dot--2" cx="6" cy="17" r="5" fill="#F95738" />
+          <circle className="splash__dot splash__dot--3" cx="20" cy="17" r="5" fill="#F95738" />
         </svg>
-        <span className="splash__text" style={{ color: SQUADR_WHITE }}>
+        <span className="splash__text">
           SQUADR
         </span>
       </div>

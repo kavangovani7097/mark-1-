@@ -313,7 +313,7 @@ function InstantLightningIcon({ size = 20 }) {
   );
 }
 
-function LocationPinIcon({ size = 24, stroke = '#7B2D42' }) {
+function LocationPinIcon({ size = 24, stroke = '#F95738' }) {
   return (
     <svg
       {...instantFlowSvgBase}
@@ -328,7 +328,7 @@ function LocationPinIcon({ size = 24, stroke = '#7B2D42' }) {
   );
 }
 
-function SearchIcon({ size = 24, stroke = '#7B2D42' }) {
+function SearchIcon({ size = 24, stroke = '#F95738' }) {
   return (
     <svg
       {...instantFlowSvgBase}
@@ -4407,7 +4407,7 @@ function App() {
       <div className="login">
         <div className="login__content">
           <h1 className="login__logo">
-            <SquadrLogo size="large" />
+            <SquadrLogo size="large" theme="light" />
           </h1>
           <p className="login__otp-message">
             Enter the 6-digit code sent to {phone}
@@ -4453,7 +4453,7 @@ function App() {
         <div className="login__brand">
           <div className="login__logo-glow">
             <h1 className="login__logo">
-              <SquadrLogo size="large" />
+              <SquadrLogo size="large" theme="light" />
             </h1>
           </div>
           <p className="login__tagline">Find your crew. Play your sport.</p>
