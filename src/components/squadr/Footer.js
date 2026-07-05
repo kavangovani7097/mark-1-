@@ -32,7 +32,7 @@ export const Footer = ({ termsUrl, privacyUrl, communityUrl }) => (
             {[InstagramIcon, TwitterIcon, YoutubeIcon].map((Icon, i) => (
               <a
                 key={i}
-                href="#"
+                href="#top"
                 data-testid={`footer-social-${i}`}
                 className="w-10 h-10 rounded-full border-2 border-[#1A3636] flex items-center justify-center hover:bg-[#F95738] hover:text-[#F5F5F0] hover:border-[#F95738] transition-colors"
                 aria-label="social"
@@ -55,10 +55,10 @@ export const Footer = ({ termsUrl, privacyUrl, communityUrl }) => (
         <FooterCol
           title="Company"
           items={[
-            { label: "About", href: "#" },
-            { label: "Careers", href: "#" },
-            { label: "Press", href: "#" },
-            { label: "Contact", href: "#" }
+            { label: "About", href: "#top" },
+            { label: "Careers", href: "#top" },
+            { label: "Press", href: "#top" },
+            { label: "Contact", href: "#top" }
           ]}
         />
         <FooterCol
@@ -66,7 +66,7 @@ export const Footer = ({ termsUrl, privacyUrl, communityUrl }) => (
           items={[
             { label: "Privacy", href: privacyUrl, external: true },
             { label: "Terms", href: termsUrl, external: true },
-            { label: "Refunds", href: "#" },
+            { label: "Refunds", href: "#top" },
             { label: "Community", href: communityUrl, external: true }
           ]}
         />
