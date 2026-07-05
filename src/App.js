@@ -39,7 +39,6 @@ import {
   CountUpStat,
   IndexTag,
   LoadingPulse,
-  PanelEyebrow,
   RevealItem,
   RevealList,
   SectionDivider,
@@ -4258,11 +4257,6 @@ function App() {
           )}
         </main>
 
-        {(activeTab === 'home' || activeTab === 'instant') && (
-          <PanelEyebrow>
-            {activeTab === 'home' ? 'YOUR SESSIONS' : 'INSTANT MATCHING'}
-          </PanelEyebrow>
-        )}
 
         {activeTab === 'home' && (
           <button

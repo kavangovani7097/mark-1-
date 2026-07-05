@@ -871,22 +871,6 @@
   box-shadow: 0 2px 12px rgba(123, 45, 66, 0.4);
 }
 
-.home__panel-eyebrow {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
-  z-index: 49;
-  margin: 0;
-  padding: 0.875rem clamp(1.875rem, 6vw, 3rem);
-  font-weight: 600;
-  text-align: center;
-  background: linear-gradient(to top,
-      rgba(10, 10, 18, 0.98) 55%,
-      rgba(10, 10, 18, 0));
-  pointer-events: none;
-}
-
 .home__session-card {
   padding: clamp(1.75rem, 5vw, 2rem);
   border-radius: 0;

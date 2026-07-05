@@ -123,14 +123,6 @@ export function IndexTag({ index, className = '' }) {
   );
 }
 
-export function PanelEyebrow({ children }) {
-  return (
-    <p className="home__panel-eyebrow" aria-hidden="true">
-      {children}
-    </p>
-  );
-}
-
 export function SectionDivider({ tag }) {
   return (
     <div className="app-divider">
