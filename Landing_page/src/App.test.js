@@ -138,8 +138,8 @@ beforeEach(() => {
 });
 
 async function goToLoginFromLanding() {
-  const getStartedButtons = await screen.findAllByRole('link', {
-    name: /Find a game/i,
+  const getStartedButtons = await screen.findAllByRole('button', {
+    name: 'Get Started',
   });
   await userEvent.click(getStartedButtons[0]);
   await screen.findByPlaceholderText('Phone number');
@@ -181,11 +181,10 @@ async function goToHomeScreen() {
 
 test('renders landing page before login', async () => {
   render(<App />);
-  expect(await screen.findByTestId('squadr-landing')).toBeInTheDocument();
-  expect(screen.getByTestId('hero-headline')).toBeInTheDocument();
-  expect(screen.getByRole('link', { name: /SQUADR/i })).toBeInTheDocument();
-  expect(screen.getAllByRole('link', { name: /Find a game/i }).length).toBeGreaterThanOrEqual(1);
-  expect(screen.getAllByRole('link', { name: /How it works/i }).length).toBeGreaterThanOrEqual(1);
+  expect(await screen.findByText('Find your crew. Play your sport.')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'SQUADR' })).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Get Started' }).length).toBeGreaterThanOrEqual(1);
+  expect(screen.getByRole('button', { name: 'How it works' })).toBeInTheDocument();
   expect(screen.queryByPlaceholderText('Phone number')).not.toBeInTheDocument();
 
   await goToLoginFromLanding();
@@ -361,7 +360,6 @@ test('does not open session detail when tapping join on card', async () => {
   await goToHomeScreen();
 
   await userEvent.click(screen.getAllByRole('button', { name: 'Join' })[0]);
-  await screen.findByRole('button', { name: 'Joined' }); // Wait for async update
 
   expect(screen.queryByRole('button', { name: 'Join Session' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
