@@ -40,9 +40,9 @@ const Counter = ({ to, suffix }) => {
     return () => io.disconnect();
   }, [to]);
   return (
-    <span ref={ref} className="font-display text-5xl md:text-6xl lg:text-7xl leading-none tracking-tighter text-[#F95738]">
+    <span ref={ref} className="font-display text-5xl md:text-6xl lg:text-7xl leading-none tracking-tighter text-squadr-accent">
       {format(v)}
-      <span className="text-[#F5F5F0]">{suffix}</span>
+      <span className="text-squadr-on-accent">{suffix}</span>
     </span>
   );
 };
@@ -56,15 +56,15 @@ const TESTIMONIALS = [
 export const Stats = () => (
   <section
     data-testid="stats-section"
-    className="relative bg-[#1A3636] text-[#F5F5F0] py-24 md:py-36 overflow-hidden border-y-2 border-[#1A3636]"
+    className="relative bg-squadr-ink text-squadr-on-accent py-24 md:py-36 overflow-hidden border-y-2 border-squadr-border"
   >
     <div className="absolute inset-0 squadr-noise opacity-30" />
-    <div className="absolute top-10 right-10 w-40 h-40 md:w-64 md:h-64 rounded-full border-2 border-[#F95738]/30" />
-    <div className="absolute bottom-16 left-10 w-24 h-24 rounded-full bg-[#F95738]/20" />
+    <div className="absolute top-10 right-10 w-40 h-40 md:w-64 md:h-64 rounded-full border-2 border-squadr-accent/30" />
+    <div className="absolute bottom-16 left-10 w-24 h-24 rounded-full bg-squadr-accent/20" />
 
     <div className="relative max-w-7xl mx-auto px-5 md:px-10">
       <div className="mb-16 md:mb-20 max-w-3xl">
-        <div className="text-xs md:text-sm font-bold tracking-[0.28em] uppercase text-[#F95738] mb-4">
+        <div className="text-xs md:text-sm font-bold tracking-[0.28em] uppercase text-squadr-accent mb-4">
           Numbers don&apos;t lie
         </div>
         <h2 className="font-display uppercase text-5xl md:text-7xl leading-[0.9] tracking-tighter">
@@ -74,23 +74,38 @@ export const Stats = () => (
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8">
         {stats.map((s) => (
-          <div key={s.label} data-testid={s.testid} className="flex flex-col gap-3 border-t-2 border-[#F5F5F0]/20 pt-6">
+          <div
+            key={s.label}
+            data-testid={s.testid}
+            className="flex flex-col gap-3 border-t-2 border-squadr-on-accent/20 pt-6"
+          >
             <Counter to={s.value} suffix={s.suffix} />
-            <div className="text-xs md:text-sm font-bold tracking-[0.24em] uppercase text-[#F5F5F0]/60">{s.label}</div>
+            <div className="text-xs md:text-sm font-bold tracking-[0.24em] uppercase opacity-60">
+              {s.label}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Testimonial strip */}
       <div className="mt-20 md:mt-28 grid grid-cols-1 md:grid-cols-3 gap-6">
         {TESTIMONIALS.map((t, i) => (
-          <figure key={i} data-testid={`testimonial-${i}`} className="border-2 border-[#F5F5F0]/20 rounded-2xl p-6 md:p-7 bg-[#1A3636]">
-            <blockquote className="text-[#F5F5F0]/90 text-base md:text-lg leading-relaxed mb-6">&ldquo;{t.q}&rdquo;</blockquote>
+          <figure
+            key={i}
+            data-testid={`testimonial-${i}`}
+            className="border-2 border-squadr-on-accent/20 rounded-2xl p-6 md:p-7 bg-squadr-ink"
+          >
+            <blockquote className="opacity-90 text-base md:text-lg leading-relaxed mb-6">
+              &ldquo;{t.q}&rdquo;
+            </blockquote>
             <figcaption className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#F95738] text-[#F5F5F0] flex items-center justify-center font-display text-sm">{t.a}</div>
+              <div className="w-10 h-10 rounded-full bg-squadr-accent text-squadr-on-accent flex items-center justify-center font-display text-sm">
+                {t.a}
+              </div>
               <div>
-                <div className="font-bold text-sm text-[#F5F5F0]">{t.n}</div>
-                <div className="text-xs text-[#F5F5F0]/50">{t.city} · {t.sport}</div>
+                <div className="font-bold text-sm">{t.n}</div>
+                <div className="text-xs opacity-50">
+                  {t.city} · {t.sport}
+                </div>
               </div>
             </figcaption>
           </figure>

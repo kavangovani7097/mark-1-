@@ -1,10 +1,20 @@
+import { useContext } from 'react';
+import { ThemeContext } from './ThemeContext';
+
 const THEMES = {
-  dark: { text: '#FFFFFF', dot: '#7B2D42' },
-  light: { text: '#1A3636', dot: '#F95738' }
+  dark: { text: '#F5F5F0', dot: '#F95738' },
+  light: { text: '#1A3636', dot: '#F95738' },
 };
 
-function SquadrLogo({ size = 'large', className = '', markAnimated = size === 'small', theme = 'light' }) {
-  const currentTheme = THEMES[theme] || THEMES.dark;
+function SquadrLogo({
+  size = 'large',
+  className = '',
+  markAnimated = size === 'small',
+  theme: themeProp,
+}) {
+  const themeCtx = useContext(ThemeContext);
+  const themeKey = themeProp || (themeCtx?.isDark ? 'dark' : 'light');
+  const currentTheme = THEMES[themeKey] || THEMES.light;
 
   const logoTextStyle = {
     color: currentTheme.text,

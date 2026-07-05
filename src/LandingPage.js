@@ -9,7 +9,10 @@ import Footer from './components/squadr/Footer';
 
 function LandingPage({ onGetStarted, termsUrl, privacyUrl, communityUrl }) {
   return (
-    <main data-testid="squadr-landing" className="bg-[#F5F5F0] text-[#1A3636] font-body overflow-x-hidden">
+    <main
+      data-testid="squadr-landing"
+      className="bg-squadr-bg text-squadr-text font-body overflow-x-hidden"
+    >
       <Nav onGetStarted={onGetStarted} />
       <Hero onGetStarted={onGetStarted} />
       <Marquee />

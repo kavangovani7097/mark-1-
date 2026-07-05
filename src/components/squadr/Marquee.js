@@ -15,12 +15,12 @@ const Row = ({ variant }) => (
           <span key={i} className="flex items-center">
             <span
               className={`font-display uppercase tracking-tighter text-[14vw] md:text-[10vw] leading-none px-6 md:px-10 ${
-                variant === "reverse" ? "text-outline" : "text-[#1A3636]"
+                variant === "reverse" ? "text-outline" : "text-squadr-text"
               }`}
             >
               {t}
             </span>
-            <span className="inline-block w-4 h-4 md:w-5 md:h-5 rounded-full bg-[#F95738] mx-2" />
+            <span className="inline-block w-4 h-4 md:w-5 md:h-5 rounded-full bg-squadr-accent mx-2" />
           </span>
         ))}
       </div>
@@ -29,7 +29,10 @@ const Row = ({ variant }) => (
 );
 
 export const Marquee = () => (
-  <section data-testid="marquee-section" className="bg-[#F5F5F0] py-8 md:py-14 border-y-2 border-[#1A3636] overflow-hidden">
+  <section
+    data-testid="marquee-section"
+    className="bg-squadr-bg py-8 md:py-14 border-y-2 border-squadr-border overflow-hidden"
+  >
     <Row />
     <div className="h-3 md:h-4" />
     <Row variant="reverse" />

@@ -33,6 +33,7 @@ import {
 } from './friends';
 import SplashScreen from './SplashScreen';
 import LandingPage from './LandingPage';
+import ThemeToggle from './components/ThemeToggle';
 import Toast from './Toast';
 import {
   CountUpStat,
@@ -2376,13 +2377,16 @@ function App() {
       <div className="home home--with-nav app-tab-panel">
         <header className="home__header home__header--nav profile--tab profile__header">
           <h1 className="profile__tab-title">Profile</h1>
-          <button
-            type="button"
-            className="profile__logout"
-            onClick={handleLogout}
-          >
-            Log out
-          </button>
+          <div className="profile__header-actions">
+            <ThemeToggle size="sm" />
+            <button
+              type="button"
+              className="profile__logout"
+              onClick={handleLogout}
+            >
+              Log out
+            </button>
+          </div>
         </header>
 
         <main className="profile__main">
@@ -3859,6 +3863,7 @@ function App() {
         <header className="home__header home__header--nav">
           <SquadrLogo size="small" />
           <div className="home__header-actions">
+            <ThemeToggle size="sm" />
             <button
               type="button"
               className={`home__toggle${openToPlay ? ' home__toggle--on' : ''}`}
@@ -4275,6 +4280,9 @@ function App() {
   if (step === 'sports') {
     return (
       <div className="login">
+        <div className="login__theme">
+          <ThemeToggle size="sm" />
+        </div>
         <div className="login__content login__content--wide">
           <h1 className="login__logo">
             <SquadrLogo size="large" />
@@ -4319,6 +4327,9 @@ function App() {
   if (step === 'onboarding') {
     return (
       <div className="login">
+        <div className="login__theme">
+          <ThemeToggle size="sm" />
+        </div>
         <div className="login__content">
           <div className="login__topbar">
             <button
@@ -4405,9 +4416,12 @@ function App() {
   if (step === 'otp') {
     return (
       <div className="login">
+        <div className="login__theme">
+          <ThemeToggle size="sm" />
+        </div>
         <div className="login__content">
           <h1 className="login__logo">
-            <SquadrLogo size="large" theme="light" />
+            <SquadrLogo size="large" />
           </h1>
           <p className="login__otp-message">
             Enter the 6-digit code sent to {phone}
@@ -4449,11 +4463,14 @@ function App() {
 
   return (
     <div className="login">
+      <div className="login__theme">
+        <ThemeToggle size="sm" />
+      </div>
       <div className="login__content">
         <div className="login__brand">
           <div className="login__logo-glow">
             <h1 className="login__logo">
-              <SquadrLogo size="large" theme="light" />
+              <SquadrLogo size="large" />
             </h1>
           </div>
           <p className="login__tagline">Find your crew. Play your sport.</p>

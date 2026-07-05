@@ -18,6 +18,15 @@ jest.mock('./supabase', () => ({
 
 import { supabase } from './supabase';
 import App from './App';
+import { ThemeProvider } from './ThemeContext';
+
+function renderApp() {
+  return render(
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+}
 
 const mockSessions = [
   {
@@ -180,7 +189,7 @@ async function goToHomeScreen() {
 }
 
 test('renders landing page before login', async () => {
-  render(<App />);
+  renderApp();
   expect(await screen.findByTestId('squadr-landing')).toBeInTheDocument();
   expect(screen.getByTestId('hero-headline')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: /SQUADR/i })).toBeInTheDocument();
@@ -195,7 +204,7 @@ test('renders landing page before login', async () => {
 });
 
 test('shows OTP screen after sending code', async () => {
-  render(<App />);
+  renderApp();
   await sendOtp();
 
   expect(screen.getByText('Enter the 6-digit code sent to 5551234567')).toBeInTheDocument();
@@ -205,7 +214,7 @@ test('shows OTP screen after sending code', async () => {
 });
 
 test('shows onboarding screen after verifying OTP', async () => {
-  render(<App />);
+  renderApp();
   await verifyOtp();
 
   expect(screen.getByText('Tell us about you')).toBeInTheDocument();
@@ -216,7 +225,7 @@ test('shows onboarding screen after verifying OTP', async () => {
 });
 
 test('shows sports selection screen after onboarding', async () => {
-  render(<App />);
+  renderApp();
   await verifyOtp();
   await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
   await userEvent.type(screen.getByPlaceholderText('Age'), '25');
@@ -241,7 +250,7 @@ test('shows sports selection screen after onboarding', async () => {
 });
 
 test('shows home screen after completing onboarding', async () => {
-  render(<App />);
+  renderApp();
   await goToHomeScreen();
 
   expect(screen.getByRole('button', { name: 'Profile' })).toBeInTheDocument();
@@ -257,7 +266,7 @@ test('shows home screen after completing onboarding', async () => {
 });
 
 test('shows create session screen from home fab', async () => {
-  render(<App />);
+  renderApp();
   await goToHomeScreen();
 
   await userEvent.click(screen.getByRole('button', { name: 'Create new session' }));
@@ -279,7 +288,7 @@ test('shows create session screen from home fab', async () => {
 });
 
 test('shows profile screen from home profile icon', async () => {
-  render(<App />);
+  renderApp();
   await goToHomeScreen();
   await userEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
@@ -299,7 +308,7 @@ test('shows profile screen from home profile icon', async () => {
 });
 
 test('shows selected sports as pills on profile', async () => {
-  render(<App />);
+  renderApp();
   await verifyOtp();
   await userEvent.type(screen.getByPlaceholderText('First Name'), 'Alex');
   await userEvent.type(screen.getByPlaceholderText('Age'), '25');
@@ -314,7 +323,7 @@ test('shows selected sports as pills on profile', async () => {
 });
 
 test('shows find players tab with filters and player cards', async () => {
-  render(<App />);
+  renderApp();
   await goToHomeScreen();
 
   await userEvent.click(screen.getByRole('button', { name: 'Instant' }));
@@ -337,7 +346,7 @@ test('shows find players tab with filters and player cards', async () => {
 });
 
 test('opens session detail when tapping a session card', async () => {
-  render(<App />);
+  renderApp();
   await goToHomeScreen();
 
   await userEvent.click(screen.getByRole('heading', { name: 'Badminton' }));
@@ -357,7 +366,7 @@ test('opens session detail when tapping a session card', async () => {
 });
 
 test('does not open session detail when tapping join on card', async () => {
-  render(<App />);
+  renderApp();
   await goToHomeScreen();
 
   await userEvent.click(screen.getAllByRole('button', { name: 'Join' })[0]);
