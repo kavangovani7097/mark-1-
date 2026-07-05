@@ -246,8 +246,8 @@ const isDisplayablePlayerName = (name) => {
 };
 
 const bottomNavSvgProps = {
-  width: 24,
-  height: 24,
+  width: 22,
+  height: 22,
   viewBox: '0 0 24 24',
   fill: 'none',
   stroke: 'currentColor',
@@ -255,6 +255,73 @@ const bottomNavSvgProps = {
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
 };
+
+// Lucide-style badge icons
+function BadgeIcon({ type, size = 15 }) {
+  const props = {
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': 'true',
+  };
+  switch (type) {
+    case 'early-adopter':
+      // Star (sparkles / wand)
+      return (
+        <svg {...props}>
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+        </svg>
+      );
+    case 'first-session':
+      // Award ribbon
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="8" r="6" />
+          <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" />
+        </svg>
+      );
+    case 'on-fire':
+      // Flame
+      return (
+        <svg {...props}>
+          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+        </svg>
+      );
+    case 'squad-legend':
+      // Gem / diamond
+      return (
+        <svg {...props}>
+          <path d="M6 3h12l4 6-10 13L2 9z" />
+          <path d="M11 3 8 9l4 13 4-13-3-6" />
+          <path d="M2 9h20" />
+        </svg>
+      );
+    case 'five-star':
+      // Star filled
+      return (
+        <svg {...props} fill="currentColor" stroke="none">
+          <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.770.56l-4.618-2.428a2.122 2.122 0 0 0-1.974 0L6.396 21.01a.53.53 0 0 1-.77-.56l.882-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+        </svg>
+      );
+    case 'social-butterfly':
+      // Users / handshake
+      return (
+        <svg {...props}>
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
 
 function BottomNavIcon({ type }) {
   switch (type) {
@@ -357,42 +424,36 @@ const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
 const PROFILE_BADGES = [
   {
     id: 'early-adopter',
-    emoji: '🌟',
     name: 'Early Adopter',
     hint: 'Joined before launch',
     isEarned: () => true,
   },
   {
     id: 'first-session',
-    emoji: '🏅',
     name: 'First Session',
     hint: 'Play your first session',
     isEarned: ({ sessionsPlayed }) => sessionsPlayed >= 1,
   },
   {
     id: 'on-fire',
-    emoji: '🔥',
     name: 'On Fire',
     hint: 'Play 5 sessions',
     isEarned: ({ sessionsPlayed }) => sessionsPlayed >= 5,
   },
   {
     id: 'squad-legend',
-    emoji: '💎',
     name: 'Squad Legend',
     hint: 'Play 20 sessions',
     isEarned: ({ sessionsPlayed }) => sessionsPlayed >= 20,
   },
   {
     id: 'five-star',
-    emoji: '⭐',
     name: '5-Star Player',
     hint: 'Reach a 4.5 rating',
     isEarned: ({ rating }) => rating >= 4.5,
   },
   {
     id: 'social-butterfly',
-    emoji: '🤝',
     name: 'Social Butterfly',
     hint: 'Add 5 friends',
     isEarned: ({ friendsCount }) => friendsCount >= 5,
@@ -2622,21 +2683,8 @@ function App() {
                           }`}
                           title={earned ? badge.name : badge.hint}
                         >
-                          {!earned && (
-                            <svg
-                              className="profile__badge-lock"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              aria-hidden="true"
-                            >
-                              <rect x="5" y="11" width="14" height="10" rx="2" />
-                              <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                            </svg>
-                          )}
-                          <span className="profile__badge-emoji" aria-hidden="true">
-                            {badge.emoji}
+                          <span className="profile__badge-icon" aria-hidden="true">
+                            <BadgeIcon type={badge.id} />
                           </span>
                           <span className="profile__badge-name">{badge.name}</span>
                           {!earned && (
