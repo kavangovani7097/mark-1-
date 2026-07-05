@@ -1,6 +1,3 @@
-const SQUADR_WINE = '#7B2D42';
-const SQUADR_WHITE = '#FFFFFF';
-
 function SplashScreen({ exiting = false }) {
   return (
     <div
