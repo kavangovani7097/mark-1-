@@ -62,12 +62,14 @@ body, .font-body {
   animation: squadr-pulse 1.6s ease-in-out infinite;
 }
 
-/* ── Grid backdrop ── */
+/* ── Premium backdrop ── */
 .squadr-grid-bg {
-  background-image:
-    linear-gradient(var(--squadr-grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--squadr-grid-line) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background-color: var(--squadr-bg);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(249, 87, 56, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(249, 87, 56, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(249, 87, 56, 0.03) 0%, transparent 70%);
+  background-attachment: fixed;
 }
 
 /* ── Noise texture ── */
