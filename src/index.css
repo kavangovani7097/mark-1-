@@ -66,10 +66,10 @@ body, .font-body {
 .squadr-grid-bg {
   background-color: var(--squadr-bg);
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(249, 87, 56, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 90% 80%, rgba(249, 87, 56, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(249, 87, 56, 0.03) 0%, transparent 70%);
+    radial-gradient(120% 100% at 50% 0%, rgba(249, 87, 56, 0.04) 0%, transparent 70%),
+    radial-gradient(100% 100% at 50% 100%, rgba(249, 87, 56, 0.02) 0%, transparent 50%);
   background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 /* ── Noise texture ── */
