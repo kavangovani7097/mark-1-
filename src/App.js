@@ -4574,7 +4574,6 @@ function App() {
               type="button"
               className="login__button login__button--secondary"
               onClick={handleContinueWithEmail}
-              disabled={!termsAccepted}
             >
               Continue with Email
             </button>
