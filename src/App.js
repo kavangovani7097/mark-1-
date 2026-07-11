@@ -4529,7 +4529,6 @@ function App() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="tel"
-            disabled={!termsAccepted}
           />
           <button
             type="submit"
@@ -4554,7 +4553,6 @@ function App() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
-                disabled={!termsAccepted}
               />
               <button
                 type="submit"
@@ -4563,7 +4561,7 @@ function App() {
               >
                 {emailCooldown > 0
                   ? `Resend in ${emailCooldown}s`
-                  : 'Send Magic Link'}
+                  : 'Send Link'}
               </button>
               {emailSent && (
                 <p className="login__hint">

@@ -1875,19 +1875,19 @@ gmp-place-autocomplete {
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--squadr-text);
+  color: var(--squadr-on-accent);
   background-color: var(--squadr-accent);
   border: none;
-  border-radius: var(--squadr-radius-lg);
+  border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(123, 45, 66, 0.45);
+  box-shadow: 3px 3px 0 0 var(--squadr-border);
   transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .find__instant-btn:hover {
   background-color: var(--squadr-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 28px rgba(123, 45, 66, 0.55);
+  box-shadow: 3px 3px 0 0 var(--squadr-border), 0 6px 20px rgba(123, 45, 66, 0.35);
 }
 
 .find__instant-btn:hover .find__instant-bolt {
