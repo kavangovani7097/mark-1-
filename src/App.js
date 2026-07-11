@@ -4329,6 +4329,25 @@ function App() {
           <ThemeToggle size="sm" />
         </div>
         <div className="login__content login__content--wide">
+          <div className="login__topbar">
+            <button
+              type="button"
+              className="login__back"
+              onClick={() => setStep('onboarding')}
+              aria-label="Go back"
+            >
+              <svg
+                className="login__back-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          </div>
           <h1 className="login__logo">
             <SquadrLogo size="large" />
           </h1>
@@ -4376,25 +4395,6 @@ function App() {
           <ThemeToggle size="sm" />
         </div>
         <div className="login__content">
-          <div className="login__topbar">
-            <button
-              type="button"
-              className="login__back"
-              onClick={() => setStep('otp')}
-              aria-label="Go back"
-            >
-              <svg
-                className="login__back-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                aria-hidden="true"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-          </div>
           <h1 className="login__logo">
             <SquadrLogo size="large" />
           </h1>
