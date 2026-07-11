@@ -1,4 +1,4 @@
-import { supabaseUrl, supabaseAnonKey } from './supabase';
+import { supabaseUrl, supabaseAnonKey, supabase } from './supabase';
 
 const REQUEST_TTL_MS = 15 * 60 * 1000;
 const GOOGLE_GEOCODING_KEY = 'AIzaSyA0Sr7npoE5MGMk9LzA4CWFGL-c-foQ30s';
@@ -174,12 +174,15 @@ export async function sendMessage({ roomId, senderName, text }) {
 }
 
 export async function joinSession({ sessionId, playerName, slotsRemaining }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  
   await fetch(restUrl('session_participants'), {
     method: 'POST',
     headers: restHeaders(),
     body: JSON.stringify({
       session_id: sessionId,
-      player_name: playerName,
+      user_id: user.id,
     }),
   });
 
@@ -194,9 +197,12 @@ export async function joinSession({ sessionId, playerName, slotsRemaining }) {
 }
 
 export async function fetchMyParticipations(playerName) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const params = new URLSearchParams({
     select: 'session_id',
-    player_name: `eq.${playerName}`,
+    user_id: `eq.${user.id}`,
   });
 
   const response = await fetch(
@@ -208,9 +214,12 @@ export async function fetchMyParticipations(playerName) {
 }
 
 export async function fetchMyRatings(raterName) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const params = new URLSearchParams({
     select: 'session_id',
-    rater_name: `eq.${raterName}`,
+    rater_id: `eq.${user.id}`,
   });
 
   const response = await fetch(`${restUrl('ratings')}?${params}`, {
@@ -221,24 +230,30 @@ export async function fetchMyRatings(raterName) {
 }
 
 export async function submitRating({ sessionId, raterName, rating }) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  
   await fetch(restUrl('ratings'), {
     method: 'POST',
     headers: restHeaders(),
     body: JSON.stringify({
       session_id: sessionId,
-      rater_name: raterName,
+      rater_id: user.id,
       rating,
     }),
   });
 }
 
 export async function deleteUserData(playerName) {
-  const value = encodeURIComponent(`eq.${playerName}`);
+  const { data: { user } } = await supabase.auth.getUser();
+  const valueName = encodeURIComponent(`eq.${playerName}`);
+  const valueId = user ? encodeURIComponent(`eq.${user.id}`) : valueName;
+  
   const targets = [
-    `session_participants?player_name=${value}`,
-    `instant_matches?player_name=${value}`,
-    `messages?sender_name=${value}`,
-    `ratings?rater_name=${value}`,
+    `session_participants?user_id=${valueId}`,
+    `instant_matches?player_name=${valueName}`,
+    `messages?sender_name=${valueName}`,
+    `ratings?rater_id=${valueId}`,
   ];
 
   await Promise.all(

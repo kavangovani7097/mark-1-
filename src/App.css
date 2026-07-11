@@ -294,16 +294,7 @@
 }
 
 .squadr-logo__mark-wrap::before {
-  content: '';
-  position: absolute;
-  inset: -0.75rem -0.5rem;
-  z-index: 0;
-  background: radial-gradient(ellipse at center,
-      rgba(123, 45, 66, 0.35) 0%,
-      rgba(123, 45, 66, 0.08) 45%,
-      transparent 70%);
-  filter: blur(8px);
-  pointer-events: none;
+  content: none;
 }
 
 .squadr-logo__mark-wrap .squadr-logo__mark {
@@ -346,8 +337,8 @@
 }
 
 .squadr-logo__text {
-  color: #FFFFFF;
-  -webkit-text-fill-color: #FFFFFF;
+  color: var(--squadr-text);
+  -webkit-text-fill-color: var(--squadr-text);
   opacity: 1;
   background: none;
   background-image: none;
@@ -867,9 +858,9 @@
 }
 
 .home__tab--active {
-  color: var(--squadr-text);
+  color: var(--squadr-on-accent);
   background-color: var(--squadr-accent);
-  box-shadow: 0 2px 12px rgba(123, 45, 66, 0.4);
+  box-shadow: 3px 3px 0 0 var(--squadr-border);
 }
 
 .home__session-card {
@@ -1199,17 +1190,19 @@
   font-size: 1.75rem;
   font-weight: 400;
   line-height: 1;
-  color: var(--squadr-text);
+  color: var(--squadr-on-accent);
   background-color: var(--squadr-accent);
-  border: none;
+  border: 2px solid var(--squadr-border);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(123, 45, 66, 0.45);
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  box-shadow: 3px 3px 0 0 var(--squadr-border);
+  transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .home__fab:hover {
   background-color: var(--squadr-accent-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 0 var(--squadr-border);
   opacity: 1;
 }
 
@@ -1842,11 +1835,11 @@ gmp-place-autocomplete {
 
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(123, 45, 66, 0.55);
+    box-shadow: 0 0 0 0 rgba(249, 87, 56, 0.55);
   }
 
   50% {
-    box-shadow: 0 0 0 5px rgba(123, 45, 66, 0);
+    box-shadow: 0 0 0 5px rgba(249, 87, 56, 0);
   }
 }
 
