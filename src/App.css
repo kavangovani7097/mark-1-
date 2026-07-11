@@ -4021,6 +4021,8 @@ gmp-place-autocomplete {
 .home__panel {
   flex: 0 0 50%;
   width: 50%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .home--with-nav {
