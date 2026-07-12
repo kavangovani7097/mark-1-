@@ -123,10 +123,3 @@ export function IndexTag({ index, className = '' }) {
   );
 }
 
-export function SectionDivider({ tag }) {
-  return (
-    <div className="app-divider">
-      {tag ? <span className="app-step-tag">{tag}</span> : null}
-    </div>
-  );
-}

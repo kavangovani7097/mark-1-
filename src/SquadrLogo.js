@@ -9,7 +9,6 @@ const THEMES = {
 function SquadrLogo({
   size = 'large',
   className = '',
-  markAnimated = false,
   theme: themeProp,
 }) {
   const themeCtx = useContext(ThemeContext);
@@ -32,11 +31,7 @@ function SquadrLogo({
       role="img"
       aria-label="Squadr"
     >
-      <span
-        className={`squadr-logo__mark-wrap squadr-logo__mark-wrap--breathe${
-          markAnimated ? ' squadr-logo__mark-wrap--orbit' : ''
-        }`}
-      >
+      <span className="squadr-logo__mark-wrap squadr-logo__mark-wrap--breathe">
         <svg
           className="squadr-logo__mark"
           viewBox="0 0 26 24"

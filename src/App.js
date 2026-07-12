@@ -41,7 +41,6 @@ import {
   LoadingPulse,
   RevealItem,
   RevealList,
-  SectionDivider,
   StepIndicator,
 } from './uiPolish';
 import './App.css';
@@ -2356,8 +2355,6 @@ function App() {
           </p>
           </RevealItem>
 
-          <SectionDivider tag="01" />
-
           <RevealItem index={1}>
           <section className="session-detail__section">
             <h2 className="session-detail__section-title">Who&apos;s Coming</h2>
@@ -2384,8 +2381,6 @@ function App() {
             </div>
           </section>
           </RevealItem>
-
-          <SectionDivider tag="02" />
 
           <RevealItem index={2}>
           <section className="session-detail__section">
@@ -2652,8 +2647,6 @@ function App() {
                 )}
               </div>
 
-              <SectionDivider tag="01" />
-
               <div className="profile__stats">
                 <div className="profile__stat">
                   <IndexTag index={1} className="profile__stat-tag" />
@@ -2669,8 +2662,6 @@ function App() {
                   <span className="profile__stat-label">Rating</span>
                 </div>
               </div>
-
-              <SectionDivider tag="02" />
 
               <section className="profile__section profile__section--badges">
                 <h2 className="profile__section-title">Badges</h2>
@@ -2700,9 +2691,7 @@ function App() {
               </section>
 
               {selectedSports.length > 0 && (
-                <>
-                  <SectionDivider />
-                  <div className="profile__sports">
+                <div className="profile__sports">
                   {selectedSports.map((sport) => (
                     <span key={sport} className="profile__sport-pill">
                       {sport}
@@ -2715,10 +2704,7 @@ function App() {
                     </span>
                   ))}
                 </div>
-                </>
               )}
-
-              <SectionDivider tag="03" />
 
               <section className="profile__section">
                 <h2 className="profile__section-title">My Crew</h2>
