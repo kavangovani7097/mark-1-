@@ -1868,27 +1868,27 @@ gmp-place-autocomplete {
   align-items: center;
   justify-content: center;
   gap: 0.625rem;
-  width: 100%;
+  width: calc(100% - 8px);
   min-height: 56px;
   padding: 1.125rem 1.5rem;
-  margin-bottom: 1.5rem;
+  margin: 0 auto 1.5rem;
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--squadr-on-accent);
   background-color: var(--squadr-accent);
-  border: none;
+  border: 2px solid var(--squadr-border);
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 3px 3px 0 0 var(--squadr-border);
+  box-shadow: 4px 4px 0 0 var(--squadr-border);
   transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
 .find__instant-btn:hover {
   background-color: var(--squadr-accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 3px 3px 0 0 var(--squadr-border), 0 6px 20px rgba(123, 45, 66, 0.35);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 0 var(--squadr-border);
 }
 
 .find__instant-btn:hover .find__instant-bolt {
@@ -3325,7 +3325,7 @@ gmp-place-autocomplete {
   margin: 0 0 0.75rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--squadr-text-secondary);
+  color: var(--squadr-text);
   letter-spacing: 0.02em;
   text-transform: uppercase;
   text-align: left;
@@ -3363,7 +3363,7 @@ gmp-place-autocomplete {
 .profile__availability-day-label {
   font-size: 0.6875rem;
   font-weight: 700;
-  color: var(--squadr-text-secondary);
+  color: var(--squadr-text);
   text-align: left;
 }
 
@@ -3383,7 +3383,7 @@ gmp-place-autocomplete {
   height: 40px;
   padding: 8px 4px;
   font-family: inherit;
-  color: #ffffff;
+  color: var(--squadr-text);
   background-color: var(--squadr-surface);
   border: 1px solid var(--squadr-input-border);
   border-radius: 8px;

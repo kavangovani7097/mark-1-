@@ -71,6 +71,7 @@ jest.mock('./supabase', () => ({
       signInWithOAuth: jest.fn(),
       getSession: jest.fn(),
       onAuthStateChange: jest.fn(),
+      getUser: jest.fn(),
     },
     from: jest.fn(),
   },
@@ -81,6 +82,10 @@ beforeEach(() => {
   localStorage.clear();
   supabase.auth.signInWithOAuth.mockResolvedValue({ error: null });
   supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+  supabase.auth.getUser.mockResolvedValue({
+    data: { user: { id: 'test-user-id' } },
+    error: null,
+  });
   supabase.auth.onAuthStateChange.mockReturnValue({
     data: { subscription: { unsubscribe: jest.fn() } },
   });

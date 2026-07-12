@@ -9,7 +9,7 @@ const THEMES = {
 function SquadrLogo({
   size = 'large',
   className = '',
-  markAnimated = size === 'small',
+  markAnimated = false,
   theme: themeProp,
 }) {
   const themeCtx = useContext(ThemeContext);

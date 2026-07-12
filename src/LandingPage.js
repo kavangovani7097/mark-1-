@@ -3,7 +3,6 @@ import Hero from './components/squadr/Hero';
 import Marquee from './components/squadr/Marquee';
 import HowItWorks from './components/squadr/HowItWorks';
 import Features from './components/squadr/Features';
-import Stats from './components/squadr/Stats';
 import FinalCTA from './components/squadr/FinalCTA';
 import Footer from './components/squadr/Footer';
 
@@ -18,7 +17,6 @@ function LandingPage({ onGetStarted, termsUrl, privacyUrl, communityUrl }) {
       <Marquee />
       <HowItWorks />
       <Features onGetStarted={onGetStarted} />
-      <Stats />
       <FinalCTA onGetStarted={onGetStarted} />
       <Footer termsUrl={termsUrl} privacyUrl={privacyUrl} communityUrl={communityUrl} />
     </main>
