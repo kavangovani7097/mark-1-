@@ -55,7 +55,7 @@ export const HowItWorks = () => (
               i === 1 ? "md:translate-y-8" : ""
             } ${i === 2 ? "md:translate-y-16" : ""}`}
           >
-            <div className="absolute -top-4 -right-2 font-display text-[10rem] md:text-[12rem] leading-none text-squadr-accent/10 select-none pointer-events-none">
+            <div className="absolute -top-4 -right-2 font-display text-[10rem] md:text-[12rem] leading-none text-squadr-accent opacity-[0.08] select-none pointer-events-none">
               {s.n}
             </div>
             <div className="relative z-10 flex flex-col gap-6 min-h-[280px] justify-between">

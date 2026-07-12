@@ -62,19 +62,19 @@ export const Hero = ({ onGetStarted }) => {
           </svg>
         </div>
         <svg
-          className="hidden md:block absolute bottom-20 left-4 md:left-16 w-40 md:w-64 text-squadr-text"
+          className="hidden md:block absolute bottom-[92px] left-4 md:left-12 w-40 md:w-56 text-squadr-text"
           viewBox="0 0 200 120"
           fill="none"
         >
           <path
-            d="M0 100 Q 60 20, 140 60 T 200 20"
+            d="M0 100 Q 50 30, 110 70 T 165 50"
             stroke="currentColor"
             strokeWidth="3"
             fill="none"
             strokeLinecap="round"
           />
           <path
-            d="M180 10 L200 20 L188 32"
+            d="M152 42 L165 50 L156 65"
             stroke="currentColor"
             strokeWidth="3"
             fill="none"
@@ -94,7 +94,7 @@ export const Hero = ({ onGetStarted }) => {
           style={{ animationDelay: "0.15s" }}
         >
           Find your <br />
-          squad.<span className="text-squadr-accent">.</span> <br />
+          squad<span className="text-squadr-accent">.</span> <br />
           <span className="flex items-baseline gap-3 md:gap-6">
             <span className="shrink-0">Play</span>
             <span
